@@ -22,78 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <ArduinoOTA.h>
-#if defined(ESP32)
-#include <WiFi.h>
-#include <SPIFFS.h>
-#include <DNSServer.h>
-#define MONITOR_SPEED 115200
-#define AP_NAME "ESP32-G-AP"
-#define EEPROM_SIZE 512
-#define _FS SPIFFS
-#elif defined(ESP8266)
-#include <ESP8266WiFi.h>
-#include <LittleFS.h>
-#include <ESPAsyncDNSServer.h>
-#define MONITOR_SPEED 74880
-#define AP_NAME "ESP8266-G-AP"
-#define EEPROM_SIZE 512
-#define _FS LittleFS
-#endif
+#include <SerialWiFiBridgeApp.h>
 
-#define HOSTNAME "esp"
-
-#include <ESPAsyncWebServer.h>
-#include <ESPAsyncWiFiManager.h>
-#include <TelnetSpy.h>
-#include <Servo.h>
-#include <EEPROM.h>
-#include <Ticker.h>
-#include <ArduinoJson.h>
-#include <StreamUtils.h>
-
-AsyncWebServer server(80);
-#if defined(ESP32)
-DNSServer dns;
-#elif defined(ESP8266)
-AsyncDNSServer dns;
-#endif
-AsyncWiFiManager wifiManager(&server, &dns);
-AsyncEventSource events("/events");
-
-static const int RELAY_NUM = 15;
-static const int SERVO_NUM = 16;
-static const int RED_PIN = 13;
-static const int GREEN_PIN = 12;
-static const int BLUE_PIN = 14;
-
-Servo myservo;
-Ticker countDown;
-Ticker mode;
-TelnetSpy SerialAndTelnet;
-
-const size_t capacity = JSON_OBJECT_SIZE(3) + 50;
-DynamicJsonDocument doc(capacity);
-
-#define Serial SerialAndTelnet
-
-//Event ID
-#define MSG_NOTHING 0x00
-#define MSG_START_TIMER 0x01
-#define MSG_RESET_TIMER 0x02
-#define MSG_COUNT_TIMER 0x03
-#define MSG_SERVO_ON 0x04
-#define MSG_IGNAITER_ON 0x05
-#define MSG_CHANGE_AP_MODE 0x06
-#define MSG_CHANGE_STA_MODE 0x07
-#define MSG_SET_TIME 0x08
-#define MSG_ENTER_SETTING 0x09
-#define MSG_ENTER_MAIN 0x0A
-#define MSG_BLYNK_LED 0x0B
-#define MSG_RESET_ESP 0xFF
-
-int gMsgEventID = MSG_NOTHING;
-
+SerialWiFiBridgeApp app;
+/*
 void SendMessage(int nMessageID)
 {
     gMsgEventID = nMessageID;
@@ -431,22 +363,52 @@ void initFS()
         return;
     }
 }
-
+*/
 void setup()
 {
     //initLeds();
-    initTelnet();
-    initEEPROM();
-    initWiFi();
-    initFS();
-    initPort();
-    initServer();
-    initOta();
+    //initTelnet();
+    //initEEPROM();
+    //initWiFi();
+    //initFS();
+    //initPort();
+    //initServer();
+    //initOta();
 }
+/*
+void connectToWifi() {
+  // wifiManager.resetSettings();  // this will delete all credentials
+  wifiManager.setDebugOutput(false);
+  wifiManager.setConfigPortalTimeout(PORTAL_TIMEOUT);
+  wifiManager.setAPCallback([] (WiFiManager *myWiFiManager) {
+    Serial.println("- No known wifi found");
+    Serial.print("- Starting AP: ");
+    Serial.println(myWiFiManager->getConfigPortalSSID());
+    Serial.println(WiFi.softAPIP());
+  });
+  // enable autoconnect
+  if (!(AP_PASSWORD == "" ? 
+    wifiManager.autoConnect(AP_NAME) : 
+    wifiManager.autoConnect(AP_NAME, AP_PASSWORD))
+   ) {
+    Serial.println("- Failed to connect and hit timeout");
+    ESP.reset();
+    delay(1000); 
+  // known wifi found & connected
+  }  else {
+    ip_addr = WiFi.localIP();
+    String mac_addr = WiFi.macAddress();
+    String wifi = WiFi.SSID();
 
+    Serial.println("- WiFi: " + wifi);
+    Serial.println("- IP: " + ip_addr.toString());
+  }
+}
+*/
 //Event Message Loop
 void loop()
 {
+/*
     char p[32] = {0};
     static int nCount = 10;
 
@@ -569,4 +531,5 @@ void loop()
         //MSG_NOTHING
         break;
     }
+*/
 }

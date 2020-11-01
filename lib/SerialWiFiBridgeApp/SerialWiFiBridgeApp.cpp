@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 #include <ArduinoOTA.h>
+#include <SPIFFS.h>
 #include <esp32-hal-log.h>
 #include "SerialWiFiBridgeApp.h"
 
@@ -52,18 +53,6 @@ String processor(const String &var)
     return "0";
 }
 
-
-
-void sendCountDownMsg(int state)
-{
-    SendMessage(MSG_COUNT_TIMER);
-}
-
-void blynkModeLed(int state)
-{
-    SendMessage(MSG_BLYNK_LED);
-}
-
 void onRequest(AsyncWebServerRequest *request)
 {
     Serial.println("onRequest() Handle Unknown Request");
@@ -80,37 +69,6 @@ void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uin
 void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
     Serial.println("onBody()");
-
-    String jsonBody;
-
-    for (size_t i = 0; i < len; i++)
-    {
-        jsonBody += (char)data[i];
-    }
-
-    //jsonBody to doc
-    deserializeJson(doc, jsonBody);
-
-    String mode = String((const char *)doc["MODE"]);
-    int SPERK_TIME = doc["SPERK_TIME"];
-    int RELEASE_TIME = doc["RELEASE_TIME"];
-
-    Serial.printf("MODE = %s ", mode.c_str());
-    Serial.printf("SPERK_TIME = %d ", SPERK_TIME);
-    Serial.printf("RELEASE_TIME = %d \n", RELEASE_TIME);
-
-    if (mode == "SUBMIT")
-    {
-        SendMessage(MSG_SET_TIME);
-    }
-    else if (mode == "STA_MODE")
-    {
-        SendMessage(MSG_CHANGE_STA_MODE);
-    }
-    else if (mode == "AP_MODE")
-    {
-        SendMessage(MSG_CHANGE_AP_MODE);
-    }
 }
 
 void initLeds()
@@ -118,20 +76,6 @@ void initLeds()
     Serial.println("Initializing RGB Led...");
 }
 
-//for anti-sperking-noise
-void closeLedPort()
-{
-    pinMode(RED_PIN, OUTPUT_OPEN_DRAIN);
-    pinMode(GREEN_PIN, OUTPUT_OPEN_DRAIN);
-    pinMode(BLUE_PIN, OUTPUT_OPEN_DRAIN);
-}
-//to normal
-void openLedPort()
-{
-    pinMode(RED_PIN, OUTPUT);
-    pinMode(GREEN_PIN, OUTPUT);
-    pinMode(BLUE_PIN, OUTPUT);
-}
 
 void initPort()
 {
@@ -153,8 +97,6 @@ void initPort()
     //pinMode(BLUE_PIN, OUTPUT_OPEN_DRAIN);
 }
 
-
-
 void initEEPROM()
 {
     Serial.println("Initializing EEPROM...");
@@ -173,8 +115,6 @@ void initEEPROM()
         deserializeJson(doc, json);
     }
 }
-
-
 
 void initServer()
 {
@@ -246,42 +186,43 @@ void initServer()
     server.begin();
     Serial.println("Server Started");
 }
+*/
 
-
-
-void initFS()
+void SerialWiFiBridgeClass::_initFS()
 {
-    // Initialize FS
-    Serial.println("Mounting FS...");
-    if (!_FS.begin())
+    Serial.println("Mounting SPIFFS...");
+    if (!SPIFFS.begin())
     {
-        Serial.println("An Error has occurred while mounting FS");
+        Serial.println("An Error has occurred while mounting SPIFFS");
         return;
     }
-}
-*/
-void SerialWiFiBridgeClass::configModeCallback(AsyncWiFiManager *myWiFiManager)
-{
-    Serial.println("Entered config mode");
-    Serial.println(WiFi.softAPIP());
-    //if you used auto generated SSID, print it
-    Serial.println(myWiFiManager->getConfigPortalSSID());
-}
-
-void SerialWiFiBridgeClass::saveConfigCallback()
-{
-    Serial.println("Should save config");
 }
 
 void SerialWiFiBridgeClass::_initWiFi()
 {
-    _wifiManager->setDebugOutput(true);
-    _wifiManager->setAPCallback(configModeCallback);
-    _wifiManager->setSaveConfigCallback(saveConfigCallback);
+    // wifiManager.resetSettings();  // this will delete all credentials
+    _wifiManager->setDebugOutput(false);
+    _wifiManager->setConfigPortalTimeout(PORTAL_TIMEOUT);
+    _wifiManager->setAPCallback([](AsyncWiFiManager *myWiFiManager) {
+        Serial.println("- No known wifi found");
+        Serial.print("- Starting AP: ");
+        Serial.println(myWiFiManager->getConfigPortalSSID());
+        Serial.println(WiFi.softAPIP());
+    });
 
-    if (!_wifiManager->autoConnect(AP_NAME))
+    // enable autoconnect
+    if (!(AP_PASSWORD == "" ? _wifiManager->autoConnect(AP_NAME) : _wifiManager->autoConnect(AP_NAME, AP_PASSWORD)))
     {
+        Serial.println("- Failed to connect and hit timeout");
         ESP.restart();
+        delay(1000);
+        // known wifi found & connected
+    }
+    else
+    {
+        Serial.println("- WiFi: " + WiFi.SSID());
+        Serial.println("-  Mac: " + WiFi.macAddress());
+        Serial.println("-   IP: " + WiFi.localIP().toString());
     }
 
     Serial.println("WiFi Started");
@@ -299,17 +240,25 @@ void SerialWiFiBridgeClass::telnetDisconnected()
 
 void SerialWiFiBridgeClass::_initTelnet()
 {
-    Serial.println("Initializing Telnet...");
+    //Serial.println("Initializing Telnet...");
 
-    Serial.begin(MONITOR_SPEED);
-    delay(500); // Wait for serial port
-    Serial.setDebugOutput(false);
-    delay(1000);
+    //Serial.begin(MONITOR_SPEED);
+    //delay(500); // Wait for serial port
+    //Serial.setDebugOutput(false);
+    //delay(1000);
 
-    _telnet->setWelcomeMsg((char *)"Welcome to ESP Terminal.\n");
-    _telnet->setCallbackOnConnect(telnetConnected);
-    _telnet->setCallbackOnDisconnect(telnetDisconnected);
-    Serial.println("log ================================================");
+    _telnet0->setWelcomeMsg((char*)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (COM0<->8880)\n");
+    _telnet0->setCallbackOnConnect(telnetConnected);
+    _telnet0->setCallbackOnDisconnect(telnetDisconnected);
+    _telnet0->setPort(SERIAL0_TCP_PORT);
+    _telnet0->setSerial(&Serial1);
+    _telnet0->begin(UART_BAUD0, SERIAL_PARAM0, SERIAL0_RXPIN, SERIAL0_TXPIN);
+
+    _telnet1->setWelcomeMsg((char*)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (COM1<->8881)\n");
+    _telnet1->setCallbackOnConnect(telnetConnected);
+    _telnet1->setCallbackOnDisconnect(telnetDisconnected);
+    _telnet1->setPort(SERIAL1_TCP_PORT);
+    _telnet1->begin(UART_BAUD1, SERIAL_PARAM1, SERIAL1_RXPIN, SERIAL1_TXPIN);
 }
 
 void SerialWiFiBridgeClass::_initOTA()
@@ -355,171 +304,24 @@ void SerialWiFiBridgeClass::_initOTA()
     Serial.println("OTA Started");
 }
 
+void SerialWiFiBridgeClass::_initLEDS() {}
+void SerialWiFiBridgeClass::_initEEPROM() {}
+void SerialWiFiBridgeClass::_initServer() {}
+
 void SerialWiFiBridgeClass::setup()
 {
-    //initLeds();
+    _initLEDS();
     _initTelnet();
-    //initEEPROM();
+    _initEEPROM();
     _initWiFi();
-    //initFS();
-    //initPort();
-    //initServer();
+    _initFS();
+    _initServer();
     _initOTA();
-}
-
-void SerialWiFiBridgeClass::_connectToWiFi()
-{
-    // wifiManager.resetSettings();  // this will delete all credentials
-    _wifiManager->setDebugOutput(false);
-    _wifiManager->setConfigPortalTimeout(PORTAL_TIMEOUT);
-    _wifiManager->setAPCallback([](AsyncWiFiManager *myWiFiManager) {
-        Serial.println("- No known wifi found");
-        Serial.print("- Starting AP: ");
-        Serial.println(myWiFiManager->getConfigPortalSSID());
-        Serial.println(WiFi.softAPIP());
-    });
-    // enable autoconnect
-    if (!(AP_PASSWORD == "" ? _wifiManager->autoConnect(AP_NAME) : _wifiManager->autoConnect(AP_NAME, AP_PASSWORD)))
-    {
-        Serial.println("- Failed to connect and hit timeout");
-        ESP.restart();
-        delay(1000);
-        // known wifi found & connected
-    }
-    else
-    {
-        Serial.println("- WiFi: " + WiFi.SSID());
-        Serial.println("- Mac: " + WiFi.macAddress());
-        Serial.println("- IP: " + WiFi.localIP().toString());
-    }
 }
 
 void SerialWiFiBridgeClass::handle()
 {
+    _telnet0->handle();
+    _telnet1->handle();
     ArduinoOTA.handle();
-    _telnet->handle();
-    /*
-    char p[32] = {0};
-    static int nCount = 10;
-
-    SerialAndTelnet.handle();
-    ArduinoOTA.handle();
-
-    switch (gMsgEventID)
-    {
-    case MSG_BLYNK_LED:
-        SendMessage(MSG_NOTHING);
-        break;
-    case MSG_ENTER_MAIN:
-        mode.detach();
-        SendMessage(MSG_NOTHING);
-        break;
-    case MSG_ENTER_SETTING:
-        mode.attach_ms(1000, blynkModeLed, 0);
-        SendMessage(MSG_NOTHING);
-        break;
-    case MSG_CHANGE_AP_MODE:
-    case MSG_CHANGE_STA_MODE:
-    {
-        Serial.print("Change Mode to ");
-        Serial.println((const char *)doc["MODE"]);
-
-        EepromStream settings(0, EEPROM_SIZE / 2);
-        //doc to settings(eeprom)
-        serializeJson(doc, settings);
-        settings.flush(); //write to eeprom
-
-        Serial.println("Reset...");
-        SendMessage(MSG_RESET_ESP);
-    }
-    break;
-    case MSG_SET_TIME:
-    {
-        Serial.println("Set times.");
-
-        EepromStream settings(0, EEPROM_SIZE / 2);
-        //doc to settings(eeprom)
-        serializeJson(doc, settings);
-        settings.flush(); //write to eeprom
-
-        SendMessage(MSG_NOTHING);
-    }
-    break;
-    case MSG_START_TIMER:
-        countDown.attach_ms(1000, sendCountDownMsg, 0);
-
-        SendMessage(MSG_NOTHING);
-        break;
-    case MSG_COUNT_TIMER:
-
-        nCount--;
-
-        Serial.printf("Timer = %d\r\n", nCount);
-
-        sprintf(p, "%d", nCount);
-        events.send(p, "count");
-
-        if (nCount == 0)
-        {
-            countDown.detach();
-            SendMessage(MSG_IGNAITER_ON);
-        }
-        else
-        {
-            SendMessage(MSG_NOTHING);
-        }
-        break;
-    case MSG_SERVO_ON:
-    {
-        int release_time = doc["RELEASE_TIME"];
-        Serial.printf("RELEASE_TIME = %d[ms]\n", release_time);
-
-        delay(release_time); // wait from MSG_IGNAITER_ON
-
-        //Serial.println("Servo ON!");
-        myservo.write(150);
-        delay(1000);
-        myservo.write(90);
-
-        SendMessage(MSG_RESET_TIMER);
-    }
-    break;
-    case MSG_IGNAITER_ON:
-    {
-        int sperk_time = doc["SPERK_TIME"];
-        Serial.printf("SPERK_TIME = %d[ms]\n", sperk_time);
-
-        pinMode(RELAY_NUM, OUTPUT);
-
-        digitalWrite(RELAY_NUM, HIGH);
-        Serial.println("Ignaiter ON!");
-        delay(sperk_time);
-        digitalWrite(RELAY_NUM, LOW);
-        Serial.println("Ignaiter OFF!");
-
-        pinMode(RELAY_NUM, INPUT_PULLUP);
-
-        SendMessage(MSG_SERVO_ON);
-    }
-    break;
-    case MSG_RESET_TIMER:
-        Serial.println("Reset");
-        countDown.detach();
-
-        nCount = 10;
-
-        sprintf(p, "%d", nCount);
-        events.send(p, "count");
-
-        SendMessage(MSG_NOTHING);
-        break;
-    case MSG_RESET_ESP:
-        delay(1000);
-        ESP.restart();
-        break;
-    default:
-        //MSG_NOTHING
-        break;
-    }
-*/
 }

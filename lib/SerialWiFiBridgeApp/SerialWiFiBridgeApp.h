@@ -34,6 +34,7 @@ SOFTWARE.
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
 #include <Ticker.h>
+
 //#include <ESP32_SPIFFS_ShinonomeFNT.h>
 //#include <ESP32_SPIFFS_UTF8toSJIS.h>
 
@@ -42,23 +43,19 @@ SOFTWARE.
 #define AP_NAME "ESP32-G-AP"
 #define AP_PASSWORD ""
 #define PORTAL_TIMEOUT 180
-//#define MSG_CONNECTED "        WiFi Started."
 
-// typedef enum
-// {
-//     OTA_IDLE,
-//     OTA_WAITAUTH,
-//     OTA_RUNUPDATE
-// } ota_state_t;
-
-// typedef enum
-// {
-//     OTA_AUTH_ERROR,
-//     OTA_BEGIN_ERROR,
-//     OTA_CONNECT_ERROR,
-//     OTA_RECEIVE_ERROR,
-//     OTA_END_ERROR
-// } ota_error_t;
+/*************************  COM Port 0 *******************************/
+#define UART_BAUD0 115200        // Baudrate UART0
+#define SERIAL_PARAM0 SERIAL_8N1 // Data/Parity/Stop UART0
+#define SERIAL0_RXPIN 3          // receive Pin UART0
+#define SERIAL0_TXPIN 1          // transmit Pin UART0
+#define SERIAL0_TCP_PORT 8880    // Wifi Port UART0
+/*************************  COM Port 1 *******************************/
+#define UART_BAUD1 115200        // Baudrate UART1
+#define SERIAL_PARAM1 SERIAL_8N1 // Data/Parity/Stop UART1
+#define SERIAL1_RXPIN 16         // receive Pin UART1
+#define SERIAL1_TXPIN 17         // transmit Pin UART1
+#define SERIAL1_TCP_PORT 8881    // Wifi Port UART1
 
 class SerialWiFiBridgeClass
 {
@@ -66,14 +63,16 @@ private:
     DNSServer *_dns;
     AsyncWebServer *_server;
     AsyncWiFiManager *_wifiManager;
-    TelnetSpy *_telnet;
+    TelnetSpy *_telnet0;
+    TelnetSpy *_telnet1;
 
     SerialWiFiBridgeClass()
     {
         _dns = new DNSServer();
         _server = new AsyncWebServer(80);
         _wifiManager = new AsyncWiFiManager(_server, _dns);
-        _telnet = new TelnetSpy();
+        _telnet0 = new TelnetSpy();
+        _telnet1 = new TelnetSpy();
     }
 
     SerialWiFiBridgeClass(const SerialWiFiBridgeClass &);
@@ -83,22 +82,19 @@ private:
         delete _wifiManager;
         delete _dns;
         delete _server;
-        delete _telnet;
+        delete _telnet0;
+        delete _telnet1;
     }
 
-    Ticker _clocker;
-    Ticker _blinker;
-    Ticker _checker;
-
-    static void configModeCallback(AsyncWiFiManager *myWiFiManager);
-    static void saveConfigCallback();
     static void telnetConnected();
     static void telnetDisconnected();
     void _initWiFi();
     void _initOTA();
     void _initTelnet();
-
-    void _connectToWiFi();
+    void _initFS();
+    void _initLEDS();
+    void _initEEPROM();
+    void _initServer();
 
 public:
     static SerialWiFiBridgeClass &getInstance()

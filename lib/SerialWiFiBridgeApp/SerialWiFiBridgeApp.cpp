@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include <ArduinoOTA.h>
 #include <SPIFFS.h>
+#include <HardwareSerial.h>
 #include <esp32-hal-log.h>
 #include "SerialWiFiBridgeApp.h"
 
@@ -32,50 +33,12 @@ void SendMessage(int nMessageID)
 {
     gMsgEventID = nMessageID;
 }
-
-String processor(const String &var)
-{
-    Serial.println("processor()");
-
-    if (var == "SPERK_TIME")
-    {
-        int SPERK_TIME = doc["SPERK_TIME"];
-        String value = String(SPERK_TIME);
-        return value;
-    }
-    else if (var == "RELEASE_TIME")
-    {
-        int RELEASE_TIME = doc["RELEASE_TIME"];
-        String value = String(RELEASE_TIME);
-        return value;
-    }
-
-    return "0";
-}
-
-void onRequest(AsyncWebServerRequest *request)
-{
-    Serial.println("onRequest() Handle Unknown Request");
-    //Handle Unknown Request
-    request->send(404);
-}
-
-void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
-{
-    Serial.println("onUpload() Handle upload");
-    //Handle upload
-}
-
-void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-{
-    Serial.println("onBody()");
-}
-
+*/
+/*
 void initLeds()
 {
     Serial.println("Initializing RGB Led...");
 }
-
 
 void initPort()
 {
@@ -115,78 +78,35 @@ void initEEPROM()
         deserializeJson(doc, json);
     }
 }
-
-void initServer()
+*/
+/*
+String processor(const String &var)
 {
-    // Route to load style.css file
-    server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Serial.println("Route to load style.css file");
-        request->send(_FS, "/style.css", "text/css");
-    });
+    Serial.println("processor()");
 
-    server.on("/jquery-3.5.1.min.js", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Serial.println("Route to load jquery-3.5.1.min.js file");
-        request->send(_FS, "/jquery-3.5.1.min.js", "text/javascript");
-    });
+    return "";
+}
 
-    // Route to load favicon.ico file
-    server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Serial.println("Route to load favicon.ico file");
-        request->send(_FS, "/favicon.ico", "icon");
-    });
+void onRequest(AsyncWebServerRequest *request)
+{
+    Serial.println("onRequest() Handle Unknown Request");
+    //Handle Unknown Request
+    request->send(404);
+}
 
-    // Route for root / web page
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Serial.println("[HTTP_GET] /");
-        request->send(_FS, "/index.html", String(), false, processor);
-        SendMessage(MSG_ENTER_MAIN);
-    });
+void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
+{
+    Serial.println("onUpload() Handle upload");
+    //Handle upload
+}
 
-    server.on(
-        "/", HTTP_POST, [](AsyncWebServerRequest *request) {
-            Serial.println("[HTTP_POST] /");
-            request->send(200);
-        },
-        NULL, onBody);
-
-    // Route for /settings web page
-    server.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Serial.println("[HTTP_GET] /settings");
-        request->send(_FS, "/settings.html", String(), false, processor);
-        SendMessage(MSG_ENTER_SETTING);
-    });
-
-    //REST API
-    //Start timer
-    server.on("/start", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Serial.println("/start");
-        request->send(_FS, "/index.html", String(), false, processor);
-        SendMessage(MSG_START_TIMER);
-    });
-
-    //Reset timer
-    server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Serial.println("/reset");
-        request->send(_FS, "/index.html", String(), false, processor);
-        SendMessage(MSG_RESET_TIMER);
-    });
-
-    events.onConnect([](AsyncEventSourceClient *client) {
-        client->send("10", NULL, millis(), 1000);
-    });
-
-    server.addHandler(&events);
-
-    // Catch-All Handlers
-    // Any request that can not find a Handler that canHandle it
-    // ends in the callbacks below.
-    server.onNotFound(onRequest);
-    server.onFileUpload(onUpload);
-
-    server.begin();
-    Serial.println("Server Started");
+void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+    Serial.println("onBody()");
 }
 */
+
+MESSAGE_ID SerialWiFiBridgeClass::_message_id = MSG_NOTHING;
 
 void SerialWiFiBridgeClass::_initFS()
 {
@@ -211,7 +131,7 @@ void SerialWiFiBridgeClass::_initWiFi()
     });
 
     // enable autoconnect
-    if (!(AP_PASSWORD == "" ? _wifiManager->autoConnect(AP_NAME) : _wifiManager->autoConnect(AP_NAME, AP_PASSWORD)))
+    if (!(String(AP_PASSWORD).isEmpty() ? _wifiManager->autoConnect(AP_NAME) : _wifiManager->autoConnect(AP_NAME, AP_PASSWORD)))
     {
         Serial.println("- Failed to connect and hit timeout");
         ESP.restart();
@@ -240,25 +160,32 @@ void SerialWiFiBridgeClass::telnetDisconnected()
 
 void SerialWiFiBridgeClass::_initTelnet()
 {
-    //Serial.println("Initializing Telnet...");
+    Serial.println("Initializing Telnet...");
 
-    //Serial.begin(MONITOR_SPEED);
-    //delay(500); // Wait for serial port
-    //Serial.setDebugOutput(false);
-    //delay(1000);
+    Serial.setDebugOutput(false);
+    Serial1.setDebugOutput(false);
+    Serial2.setDebugOutput(false);
 
-    _telnet0->setWelcomeMsg((char*)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (COM0<->8880)\n");
-    _telnet0->setCallbackOnConnect(telnetConnected);
-    _telnet0->setCallbackOnDisconnect(telnetDisconnected);
+    _telnet0->setWelcomeMsg((char *)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (COM0<->8880)\n");
+    _telnet0->setCallbackOnConnect(SerialWiFiBridgeClass::telnetConnected);
+    _telnet0->setCallbackOnDisconnect(SerialWiFiBridgeClass::telnetDisconnected);
     _telnet0->setPort(SERIAL0_TCP_PORT);
-    _telnet0->setSerial(&Serial1);
+    _telnet0->setSerial(&Serial);
     _telnet0->begin(UART_BAUD0, SERIAL_PARAM0, SERIAL0_RXPIN, SERIAL0_TXPIN);
 
-    _telnet1->setWelcomeMsg((char*)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (COM1<->8881)\n");
-    _telnet1->setCallbackOnConnect(telnetConnected);
-    _telnet1->setCallbackOnDisconnect(telnetDisconnected);
+    _telnet1->setWelcomeMsg((char *)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (COM0<->8881)\n");
+    _telnet1->setCallbackOnConnect(SerialWiFiBridgeClass::telnetConnected);
+    _telnet1->setCallbackOnDisconnect(SerialWiFiBridgeClass::telnetDisconnected);
     _telnet1->setPort(SERIAL1_TCP_PORT);
+    _telnet1->setSerial(&Serial1);
     _telnet1->begin(UART_BAUD1, SERIAL_PARAM1, SERIAL1_RXPIN, SERIAL1_TXPIN);
+
+    _telnet2->setWelcomeMsg((char *)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (COM1<->8882)\n");
+    _telnet2->setCallbackOnConnect(SerialWiFiBridgeClass::telnetConnected);
+    _telnet2->setCallbackOnDisconnect(SerialWiFiBridgeClass::telnetDisconnected);
+    _telnet2->setPort(SERIAL2_TCP_PORT);
+    _telnet2->setSerial(&Serial2);
+    _telnet2->begin(UART_BAUD2, SERIAL_PARAM2, SERIAL2_RXPIN, SERIAL2_TXPIN);
 }
 
 void SerialWiFiBridgeClass::_initOTA()
@@ -306,22 +233,95 @@ void SerialWiFiBridgeClass::_initOTA()
 
 void SerialWiFiBridgeClass::_initLEDS() {}
 void SerialWiFiBridgeClass::_initEEPROM() {}
-void SerialWiFiBridgeClass::_initServer() {}
+
+void SerialWiFiBridgeClass::onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+    Serial.println("onBody()");
+}
+
+void SerialWiFiBridgeClass::_initServer()
+{
+    _server->on(
+        "/", HTTP_POST, [](AsyncWebServerRequest *request) {
+            Serial.println("[HTTP_POST] /");
+            request->send(200);
+        },
+        NULL, onBody);
+
+    //REST API exsample
+    _server->on("/A", HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("/A");
+        //SendMessage(MSG_START_TIMER);
+    });
+
+    _server->on("/B", HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("/B");
+        //SendMessage(MSG_RESET_TIMER);
+    });
+}
+
+void SerialWiFiBridgeClass::printClock()
+{
+    SerialWiFiBridgeClass::_message_id = MSG_COMMAND_CLOCK;
+}
+
+void SerialWiFiBridgeClass::_initClock()
+{
+    //Get NTP Time
+    configTzTime("JST-9", "ntp.nict.jp", "ntp.jst.mfeed.ad.jp");
+
+    clocker.attach(1, SerialWiFiBridgeClass::printClock);
+}
 
 void SerialWiFiBridgeClass::setup()
 {
+    Serial.println("[SWB]start setup()");
+ 
     _initLEDS();
     _initTelnet();
     _initEEPROM();
+    _initServer();
     _initWiFi();
     _initFS();
-    _initServer();
     _initOTA();
+    _initClock();
+    Serial.println("[SWB]end setup()");
+}
+
+void SerialWiFiBridgeClass::_printClock()
+{
+    time_t t = time(NULL);
+    struct tm *tm = localtime(&t);
+
+    _telnet0->printf("[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    _telnet1->printf("[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    _telnet2->printf("[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
+
+    log_i("HH:MM:SS = %02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
+}
+
+void SerialWiFiBridgeClass::message_handle(MESSAGE_ID msg_id)
+{
+    switch(msg_id)
+    {
+        case MSG_COMMAND_CLOCK:
+            _printClock();
+        break;
+        case MSG_COMMAND_RESET:
+        break;
+        default:
+         ;
+    }
+
+    SerialWiFiBridgeClass::_message_id = MSG_NOTHING;
 }
 
 void SerialWiFiBridgeClass::handle()
 {
     _telnet0->handle();
     _telnet1->handle();
+    _telnet2->handle();
     ArduinoOTA.handle();
+
+    message_handle(SerialWiFiBridgeClass::_message_id);    
 }

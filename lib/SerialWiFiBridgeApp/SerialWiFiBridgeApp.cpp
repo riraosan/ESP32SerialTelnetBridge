@@ -28,85 +28,19 @@ SOFTWARE.
 #include <esp32-hal-log.h>
 #include "SerialWiFiBridgeApp.h"
 
-/*
-void SendMessage(int nMessageID)
-{
-    gMsgEventID = nMessageID;
-}
-*/
-/*
-void initLeds()
-{
-    Serial.println("Initializing RGB Led...");
-}
+MESSAGE_ID SerialWiFiBridgeClass::_message_id = MSG_NOTHING;
 
-void initPort()
+void SerialWiFiBridgeClass::_initPort()
 {
     Serial.println("Initializing Ports...");
-
-    pinMode(SERVO_NUM, OUTPUT);
-    pinMode(RELAY_NUM, INPUT_PULLUP);
-
-    myservo.attach(SERVO_NUM);
-    myservo.write(90);
-
-    //init open IO for anti-noise
-    //pinMode(4, OUTPUT_OPEN_DRAIN);
-    //pinMode(16, OUTPUT_OPEN_DRAIN);
-    //pinMode(1, OUTPUT_OPEN_DRAIN);
-    //pinMode(3, OUTPUT_OPEN_DRAIN);
-    //pinMode(RED_PIN, OUTPUT_OPEN_DRAIN);
-    //pinMode(GREEN_PIN, OUTPUT_OPEN_DRAIN);
-    //pinMode(BLUE_PIN, OUTPUT_OPEN_DRAIN);
+    //TODO:Initializing Ports
 }
 
-void initEEPROM()
+void SerialWiFiBridgeClass::_initEEPROM()
 {
     Serial.println("Initializing EEPROM...");
-    EEPROM.begin(EEPROM_SIZE);
-
-    EepromStream settings(0, EEPROM_SIZE / 2);
-
-    //settings(eeprom) to doc
-    deserializeJson(doc, settings);
-
-    if (doc.isNull() == true)
-    {
-        Serial.println("doc is null");
-
-        const char *json = "{\"MODE\":\"AP_MODE\",\"SPERK_TIME\":50,\"RELEASE_TIME\":10}";
-        deserializeJson(doc, json);
-    }
+    //TODO:Initializing EEPROM
 }
-*/
-/*
-String processor(const String &var)
-{
-    Serial.println("processor()");
-
-    return "";
-}
-
-void onRequest(AsyncWebServerRequest *request)
-{
-    Serial.println("onRequest() Handle Unknown Request");
-    //Handle Unknown Request
-    request->send(404);
-}
-
-void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
-{
-    Serial.println("onUpload() Handle upload");
-    //Handle upload
-}
-
-void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-{
-    Serial.println("onBody()");
-}
-*/
-
-MESSAGE_ID SerialWiFiBridgeClass::_message_id = MSG_NOTHING;
 
 void SerialWiFiBridgeClass::_initFS()
 {
@@ -120,7 +54,6 @@ void SerialWiFiBridgeClass::_initFS()
 
 void SerialWiFiBridgeClass::_initWiFi()
 {
-    // wifiManager.resetSettings();  // this will delete all credentials
     _wifiManager->setDebugOutput(false);
     _wifiManager->setConfigPortalTimeout(PORTAL_TIMEOUT);
     _wifiManager->setAPCallback([](AsyncWiFiManager *myWiFiManager) {
@@ -136,7 +69,6 @@ void SerialWiFiBridgeClass::_initWiFi()
         Serial.println("- Failed to connect and hit timeout");
         ESP.restart();
         delay(1000);
-        // known wifi found & connected
     }
     else
     {
@@ -145,22 +77,22 @@ void SerialWiFiBridgeClass::_initWiFi()
         Serial.println("-   IP: " + WiFi.localIP().toString());
     }
 
-    Serial.println("WiFi Started");
+    Serial.println("- WiFi Started");
 }
 
 void SerialWiFiBridgeClass::telnetConnected()
 {
-    Serial.println("Telnet connection established.");
+    Serial.println("- Telnet connection established.");
 }
 
 void SerialWiFiBridgeClass::telnetDisconnected()
 {
-    Serial.println("Telnet connection closed.");
+    Serial.println("- Telnet connection closed.");
 }
 
 void SerialWiFiBridgeClass::_initTelnet()
 {
-    Serial.println("Initializing Telnet...");
+    Serial.println("- Initializing Telnet...");
 
     Serial.setDebugOutput(false);
     Serial1.setDebugOutput(false);
@@ -173,14 +105,14 @@ void SerialWiFiBridgeClass::_initTelnet()
     _telnet0->setSerial(&Serial);
     _telnet0->begin(UART_BAUD0, SERIAL_PARAM0, SERIAL0_RXPIN, SERIAL0_TXPIN);
 
-    _telnet1->setWelcomeMsg((char *)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (COM0<->8881)\n");
+    _telnet1->setWelcomeMsg((char *)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (COM1<->8881)\n");
     _telnet1->setCallbackOnConnect(SerialWiFiBridgeClass::telnetConnected);
     _telnet1->setCallbackOnDisconnect(SerialWiFiBridgeClass::telnetDisconnected);
     _telnet1->setPort(SERIAL1_TCP_PORT);
     _telnet1->setSerial(&Serial1);
     _telnet1->begin(UART_BAUD1, SERIAL_PARAM1, SERIAL1_RXPIN, SERIAL1_TXPIN);
 
-    _telnet2->setWelcomeMsg((char *)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (COM1<->8882)\n");
+    _telnet2->setWelcomeMsg((char *)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (COM2<->8882)\n");
     _telnet2->setCallbackOnConnect(SerialWiFiBridgeClass::telnetConnected);
     _telnet2->setCallbackOnDisconnect(SerialWiFiBridgeClass::telnetDisconnected);
     _telnet2->setPort(SERIAL2_TCP_PORT);
@@ -224,15 +156,12 @@ void SerialWiFiBridgeClass::_initOTA()
 
     ArduinoOTA.setHostname(HOSTNAME);
 
-    Serial.print("Hostname: ");
+    Serial.print("- Hostname: ");
     Serial.println(ArduinoOTA.getHostname() + ".local");
 
     ArduinoOTA.begin();
-    Serial.println("OTA Started");
+    Serial.println("- OTA Started");
 }
-
-void SerialWiFiBridgeClass::_initLEDS() {}
-void SerialWiFiBridgeClass::_initEEPROM() {}
 
 void SerialWiFiBridgeClass::onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
@@ -251,12 +180,10 @@ void SerialWiFiBridgeClass::_initServer()
     //REST API exsample
     _server->on("/A", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("/A");
-        //SendMessage(MSG_START_TIMER);
     });
 
     _server->on("/B", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("/B");
-        //SendMessage(MSG_RESET_TIMER);
     });
 }
 
@@ -267,7 +194,7 @@ void SerialWiFiBridgeClass::printClock()
 
 void SerialWiFiBridgeClass::_initClock()
 {
-    //Get NTP Time
+    //Get NTP time
     configTzTime("JST-9", "ntp.nict.jp", "ntp.jst.mfeed.ad.jp");
 
     clocker.attach(1, SerialWiFiBridgeClass::printClock);
@@ -275,42 +202,42 @@ void SerialWiFiBridgeClass::_initClock()
 
 void SerialWiFiBridgeClass::setup()
 {
-    Serial.println("[SWB]start setup()");
- 
-    _initLEDS();
+    _initPort();
     _initTelnet();
     _initEEPROM();
     _initServer();
-    _initWiFi();
     _initFS();
+    _initWiFi();
     _initOTA();
     _initClock();
-    Serial.println("[SWB]end setup()");
+    Serial.println("setup() end");
 }
 
+//for test
 void SerialWiFiBridgeClass::_printClock()
 {
     time_t t = time(NULL);
     struct tm *tm = localtime(&t);
 
-    _telnet0->printf("[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
-    _telnet1->printf("[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
-    _telnet2->printf("[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    _telnet0->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    _telnet1->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    _telnet2->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
 
     log_i("HH:MM:SS = %02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
 }
 
 void SerialWiFiBridgeClass::message_handle(MESSAGE_ID msg_id)
 {
-    switch(msg_id)
+    switch (msg_id)
     {
-        case MSG_COMMAND_CLOCK:
-            _printClock();
+    case MSG_COMMAND_CLOCK:
+        _printClock();
         break;
-        case MSG_COMMAND_RESET:
+    case MSG_COMMAND_RESET:
+        ESP.restart();
+        delay(2000);
         break;
-        default:
-         ;
+    default:;
     }
 
     SerialWiFiBridgeClass::_message_id = MSG_NOTHING;
@@ -323,5 +250,5 @@ void SerialWiFiBridgeClass::handle()
     _telnet2->handle();
     ArduinoOTA.handle();
 
-    message_handle(SerialWiFiBridgeClass::_message_id);    
+    message_handle(SerialWiFiBridgeClass::_message_id);
 }

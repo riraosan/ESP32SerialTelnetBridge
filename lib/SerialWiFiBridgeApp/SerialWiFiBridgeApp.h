@@ -118,9 +118,6 @@ private:
         _telnet0 = new TelnetSpy();
         _telnet1 = new TelnetSpy();
         _telnet2 = new TelnetSpy();
-
-        
-
     }
 
     SerialWiFiBridgeClass(const SerialWiFiBridgeClass &);
@@ -141,10 +138,10 @@ private:
     void _initOTA();
     void _initTelnet();
     void _initFS();
-    void _initLEDS();
+    void _initPort();
     void _initEEPROM();
     void _initServer();
-    void _initClock();
+    void _initClock();    
     void _printClock();
 
     static String processor(const String &var);
@@ -163,6 +160,7 @@ public:
     void setup();
     void handle();
     static void printClock();
+
 };
 
 #endif

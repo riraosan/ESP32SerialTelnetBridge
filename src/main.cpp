@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2020 riraotech.com
+Copyright (c) 2020-2021riraotech.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,12 +24,15 @@ SOFTWARE.
 
 #include "SerialWiFiBridgeApp.h"
 
+//app class
+static SerialWiFiBridgeClass &app = SerialWiFiBridgeClass::getInstance();
+
 void setup()
 {
-    SerialWiFiBridgeClass::getInstance().setup();
+    app.setup();
 }
 
 void loop()
 {
-    SerialWiFiBridgeClass::getInstance().handle();
+    app.handle();
 }

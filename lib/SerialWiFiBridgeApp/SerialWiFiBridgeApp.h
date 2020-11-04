@@ -60,35 +60,7 @@ SOFTWARE.
 #define SERIAL2_TXPIN 17         // transmit Pin UART2
 #define SERIAL2_TCP_PORT 8882    // Wifi Port UART2
 
-/* Baud-rates available: 300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, or 115200, 256000, 512000, 962100
- *  
- *  Protocols available:
- * SERIAL_5N1   5-bit No parity 1 stop bit
- * SERIAL_6N1   6-bit No parity 1 stop bit
- * SERIAL_7N1   7-bit No parity 1 stop bit
- * SERIAL_8N1 (the default) 8-bit No parity 1 stop bit
- * SERIAL_5N2   5-bit No parity 2 stop bits 
- * SERIAL_6N2   6-bit No parity 2 stop bits
- * SERIAL_7N2   7-bit No parity 2 stop bits
- * SERIAL_8N2   8-bit No parity 2 stop bits 
- * SERIAL_5E1   5-bit Even parity 1 stop bit
- * SERIAL_6E1   6-bit Even parity 1 stop bit
- * SERIAL_7E1   7-bit Even parity 1 stop bit 
- * SERIAL_8E1   8-bit Even parity 1 stop bit 
- * SERIAL_5E2   5-bit Even parity 2 stop bit 
- * SERIAL_6E2   6-bit Even parity 2 stop bit 
- * SERIAL_7E2   7-bit Even parity 2 stop bit  
- * SERIAL_8E2   8-bit Even parity 2 stop bit  
- * SERIAL_5O1   5-bit Odd  parity 1 stop bit  
- * SERIAL_6O1   6-bit Odd  parity 1 stop bit   
- * SERIAL_7O1   7-bit Odd  parity 1 stop bit  
- * SERIAL_8O1   8-bit Odd  parity 1 stop bit   
- * SERIAL_5O2   5-bit Odd  parity 2 stop bit   
- * SERIAL_6O2   6-bit Odd  parity 2 stop bit    
- * SERIAL_7O2   7-bit Odd  parity 2 stop bit    
- * SERIAL_8O2   8-bit Odd  parity 2 stop bit    
-*/
-
+//Message ID
 typedef enum message_id
 {
     MSG_COMMAND_RESET = 0,
@@ -99,14 +71,13 @@ typedef enum message_id
 class SerialWiFiBridgeClass
 {
 private:
-
     DNSServer *_dns;
     AsyncWebServer *_server;
     AsyncWiFiManager *_wifiManager;
     TelnetSpy *_telnet0;
     TelnetSpy *_telnet1;
     TelnetSpy *_telnet2;
-    Ticker clocker;
+    Ticker _clocker;
 
     static MESSAGE_ID _message_id;
 
@@ -122,6 +93,7 @@ private:
 
     SerialWiFiBridgeClass(const SerialWiFiBridgeClass &);
     SerialWiFiBridgeClass &operator=(const SerialWiFiBridgeClass &);
+    
     ~SerialWiFiBridgeClass()
     {
         delete _wifiManager;
@@ -132,23 +104,8 @@ private:
         delete _telnet2;
     }
 
-    static void telnetConnected();
-    static void telnetDisconnected();
-    void _initWiFi();
-    void _initOTA();
-    void _initTelnet();
-    void _initFS();
-    void _initPort();
-    void _initEEPROM();
-    void _initServer();
-    void _initClock();    
-    void _printClock();
-
-    static String processor(const String &var);
-    static void onRequest(AsyncWebServerRequest *request);
-    static void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
-    static void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
-    void message_handle(MESSAGE_ID msg_id);
+    static void _telnetConnected();
+    static void _telnetDisconnected();
 
 public:
     static SerialWiFiBridgeClass &getInstance()
@@ -157,10 +114,25 @@ public:
         return inst;
     }
 
+    static void sendClockMessage();
+    static String processor(const String &var);
+    static void onRequest(AsyncWebServerRequest *request);
+    static void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
+    static void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
+
+    virtual void initWiFi();
+    virtual void initOTA();
+    virtual void initTelnet();
+    virtual void initFS();
+    virtual void initPort();
+    virtual void initEEPROM();
+    virtual void initServer();
+    virtual void initClock();
+    virtual void printClock();
+    virtual void messageHandle(MESSAGE_ID msg_id);
+
     void setup();
     void handle();
-    static void printClock();
-
 };
 
 #endif

@@ -2,6 +2,9 @@
 
 ## ✅ 必要とするもの、要件
 
+
+
+
 ### 簡単な回路図
 
 TBD
@@ -24,7 +27,8 @@ TBD
 
 #### esp32 libraries
 
-TBD
+- 
+
 
 ### 例
 
@@ -34,6 +38,8 @@ TBD
 ```bash
 $ git clone https://github.com/riraosan/ESP32SerialWiFiBridge.git
 ```
+
+
 
 ## 👤 Author
 - Github: [riraosan](https://github.com/riraosan)

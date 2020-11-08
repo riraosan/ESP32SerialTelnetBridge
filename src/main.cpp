@@ -24,7 +24,6 @@ SOFTWARE.
 
 #include "SerialWiFiBridgeApp.h"
 
-//app class
 static SerialWiFiBridgeClass &app = SerialWiFiBridgeClass::getInstance();
 
 void setup()

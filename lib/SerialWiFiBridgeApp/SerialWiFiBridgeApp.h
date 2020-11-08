@@ -34,6 +34,7 @@ SOFTWARE.
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
 #include <Ticker.h>
+#include <SimpleCLI.h>
 
 #define HOSTNAME "esp32"
 #define MONITOR_SPEED 115200
@@ -41,6 +42,9 @@ SOFTWARE.
 #define AP_PASSWORD ""
 #define PORTAL_TIMEOUT 180
 
+//NOTE: The PIN assignment has changed and may not look straigt forward (other PINs are marke as Rx/Tx),
+//but this assignment allows to flash via USB also with hooked MAX3232 serial drivers.
+//https://github.com/AlphaLima/ESP32-Serial-Bridge.git
 /*************************  COM Port 0 *******************************/
 #define UART_BAUD0 115200        // Baudrate UART0
 #define SERIAL_PARAM0 SERIAL_8N1 // Data/Parity/Stop UART0
@@ -50,14 +54,14 @@ SOFTWARE.
 /*************************  COM Port 1 *******************************/
 #define UART_BAUD1 115200        // Baudrate UART1
 #define SERIAL_PARAM1 SERIAL_8N1 // Data/Parity/Stop UART1
-#define SERIAL1_RXPIN 15         // receive Pin UART1
-#define SERIAL1_TXPIN 2          // transmit Pin UART1
+#define SERIAL1_RXPIN 16         // receive Pin UART1
+#define SERIAL1_TXPIN 17         // transmit Pin UART1
 #define SERIAL1_TCP_PORT 8881    // Wifi Port UART1
 /*************************  COM Port 2 *******************************/
 #define UART_BAUD2 115200        // Baudrate UART2
 #define SERIAL_PARAM2 SERIAL_8N1 // Data/Parity/Stop UART2
-#define SERIAL2_RXPIN 16         // receive Pin UART2
-#define SERIAL2_TXPIN 17         // transmit Pin UART2
+#define SERIAL2_RXPIN 4          // receive Pin UART2
+#define SERIAL2_TXPIN 2          // transmit Pin UART2
 #define SERIAL2_TCP_PORT 8882    // Wifi Port UART2
 
 //Message ID
@@ -78,6 +82,9 @@ private:
     TelnetSpy *_telnet1;
     TelnetSpy *_telnet2;
     Ticker _clocker;
+    
+    SimpleCLI _cli;
+    Command _cmdLed;
 
     static MESSAGE_ID _message_id;
 
@@ -93,7 +100,7 @@ private:
 
     SerialWiFiBridgeClass(const SerialWiFiBridgeClass &);
     SerialWiFiBridgeClass &operator=(const SerialWiFiBridgeClass &);
-    
+
     ~SerialWiFiBridgeClass()
     {
         delete _wifiManager;
@@ -106,6 +113,11 @@ private:
 
     static void _telnetConnected();
     static void _telnetDisconnected();
+    void _serialHandle(TelnetSpy *telnet, HardwareSerial *serial);
+
+    //console
+    static void _cowsayCallback(cmd* c);
+    static void _errorCallback(cmd_error* e);
 
 public:
     static SerialWiFiBridgeClass &getInstance()
@@ -123,6 +135,7 @@ public:
     virtual void initWiFi();
     virtual void initOTA();
     virtual void initTelnet();
+    virtual void initConsole();
     virtual void initFS();
     virtual void initPort();
     virtual void initEEPROM();

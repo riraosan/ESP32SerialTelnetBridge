@@ -30,24 +30,36 @@ SOFTWARE.
 
 MESSAGE_ID SerialWiFiBridgeClass::_message_id = MSG_NOTHING;
 
+HardwareSerial _Serial(0);
+HardwareSerial _Serial1(1);
+HardwareSerial _Serial2(2);
+
+/*
+    log_e("")
+    log_w("")
+    log_i("")
+    log_d("")
+    log_v("")
+*/
+
 void SerialWiFiBridgeClass::initPort()
 {
-    Serial.println("Initializing Ports...");
+    _Serial.println("Initializing Ports...");
     //TODO:Initializing Ports
 }
 
 void SerialWiFiBridgeClass::initEEPROM()
 {
-    Serial.println("Initializing EEPROM...");
+    _Serial.println("Initializing EEPROM...");
     //TODO:Initializing EEPROM
 }
 
 void SerialWiFiBridgeClass::initFS()
 {
-    Serial.println("Mounting SPIFFS...");
+    _Serial.println("Mounting SPIFFS...");
     if (!SPIFFS.begin())
     {
-        Serial.println("An Error has occurred while mounting SPIFFS");
+        _Serial.println("An Error has occurred while mounting SPIFFS");
         return;
     }
 }
@@ -57,67 +69,135 @@ void SerialWiFiBridgeClass::initWiFi()
     _wifiManager->setDebugOutput(false);
     _wifiManager->setConfigPortalTimeout(PORTAL_TIMEOUT);
     _wifiManager->setAPCallback([](AsyncWiFiManager *myWiFiManager) {
-        Serial.println("- No known wifi found");
-        Serial.print("- Starting AP: ");
-        Serial.println(myWiFiManager->getConfigPortalSSID());
-        Serial.println(WiFi.softAPIP());
+        _Serial.println("- No known wifi found");
+        _Serial.print("- Starting AP: ");
+        _Serial.println(myWiFiManager->getConfigPortalSSID());
+        _Serial.println(WiFi.softAPIP());
     });
 
     // enable autoconnect
     if (!(String(AP_PASSWORD).isEmpty() ? _wifiManager->autoConnect(AP_NAME) : _wifiManager->autoConnect(AP_NAME, AP_PASSWORD)))
     {
-        Serial.println("- Failed to connect and hit timeout");
+        _Serial.println("- Failed to connect and hit timeout");
         ESP.restart();
         delay(1000);
     }
     else
     {
-        Serial.println("- WiFi: " + WiFi.SSID());
-        Serial.println("-  Mac: " + WiFi.macAddress());
-        Serial.println("-   IP: " + WiFi.localIP().toString());
+        _Serial.println("- WiFi: " + WiFi.SSID());
+        _Serial.println("-  Mac: " + WiFi.macAddress());
+        _Serial.println("-   IP: " + WiFi.localIP().toString());
     }
 
-    Serial.println("- WiFi Started");
+    _Serial.println("- WiFi Started");
 }
 
 void SerialWiFiBridgeClass::_telnetConnected()
 {
-    Serial.println("- Telnet connection established.");
+    _Serial.println("- Telnet connection established.");
 }
 
 void SerialWiFiBridgeClass::_telnetDisconnected()
 {
-    Serial.println("- Telnet connection closed.");
+    _Serial.println("- Telnet connection closed.");
 }
 
 void SerialWiFiBridgeClass::initTelnet()
 {
-    Serial.println("- Initializing Telnet...");
+    _Serial.println("- Initializing Telnet...");
 
-    Serial.setDebugOutput(false);
-    Serial1.setDebugOutput(false);
-    Serial2.setDebugOutput(false);
+    _Serial.setDebugOutput(false);
+    _Serial1.setDebugOutput(false);
+    _Serial2.setDebugOutput(false);
 
-    _telnet0->setWelcomeMsg((char *)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (COM0<->8880)\n");
+    _telnet0->setWelcomeMsg((char *)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. \n(Serial0 <-> 8880)\n");
     _telnet0->setCallbackOnConnect(SerialWiFiBridgeClass::_telnetConnected);
     _telnet0->setCallbackOnDisconnect(SerialWiFiBridgeClass::_telnetDisconnected);
     _telnet0->setPort(SERIAL0_TCP_PORT);
-    _telnet0->setSerial(&Serial);
-    _telnet0->begin(UART_BAUD0, SERIAL_PARAM0, SERIAL0_RXPIN, SERIAL0_TXPIN);
+    _telnet0->setSerial(&_Serial);
+    _telnet0->begin(UART_BAUD0, SERIAL_8N1, SERIAL0_RXPIN, SERIAL0_TXPIN);
 
-    _telnet1->setWelcomeMsg((char *)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (COM1<->8881)\n");
+    _telnet1->setWelcomeMsg((char *)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. \n(Serial1 <-> 8881)\n");
     _telnet1->setCallbackOnConnect(SerialWiFiBridgeClass::_telnetConnected);
     _telnet1->setCallbackOnDisconnect(SerialWiFiBridgeClass::_telnetDisconnected);
     _telnet1->setPort(SERIAL1_TCP_PORT);
-    _telnet1->setSerial(&Serial1);
-    _telnet1->begin(UART_BAUD1, SERIAL_PARAM1, SERIAL1_RXPIN, SERIAL1_TXPIN);
+    _telnet1->setSerial(&_Serial1);
+    _telnet1->begin(UART_BAUD1, SERIAL_8N1, SERIAL1_RXPIN, SERIAL1_TXPIN);
 
-    _telnet2->setWelcomeMsg((char *)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (COM2<->8882)\n");
+    _telnet2->setWelcomeMsg((char *)"\n\nWelcome to ESP32 Serial WiFi Bridge Terminal. (Serial2<->8882)\n");
     _telnet2->setCallbackOnConnect(SerialWiFiBridgeClass::_telnetConnected);
     _telnet2->setCallbackOnDisconnect(SerialWiFiBridgeClass::_telnetDisconnected);
     _telnet2->setPort(SERIAL2_TCP_PORT);
-    _telnet2->setSerial(&Serial2);
-    _telnet2->begin(UART_BAUD2, SERIAL_PARAM2, SERIAL2_RXPIN, SERIAL2_TXPIN);
+    _telnet2->setSerial(&_Serial2);
+    _telnet2->begin(UART_BAUD2, SERIAL_8N1, SERIAL2_RXPIN, SERIAL2_TXPIN);
+
+    delay(1000);
+
+    _Serial.println("Serial0 Txd is on pin: " + String(SERIAL0_TXPIN));
+    _Serial.println("Serial0 Rxd is on pin: " + String(SERIAL0_RXPIN));
+
+    _Serial.println("Serial1 Txd is on pin: " + String(SERIAL1_TXPIN));
+    _Serial.println("Serial1 Rxd is on pin: " + String(SERIAL1_RXPIN));
+
+    _Serial.println("Serial2 Txd is on pin: " + String(SERIAL2_TXPIN));
+    _Serial.println("Serial2 Rxd is on pin: " + String(SERIAL2_RXPIN));
+}
+
+// Callback function for cowsay command
+void SerialWiFiBridgeClass::_cowsayCallback(cmd *c)
+{
+    Command cmd(c); // Create wrapper object
+
+    // Get first (and only) Argument
+    Argument arg = cmd.getArgument(0);
+
+    // Get value of argument
+    String argVal = arg.getValue();
+
+    // Print Value
+    Serial.print(' ');
+
+    for (int i = 0; i < argVal.length(); i++)
+        Serial.print('_');
+    Serial.println(' ');
+
+    Serial.print("< ");
+    Serial.print(argVal);
+    Serial.println(" >");
+
+    Serial.print(' ');
+
+    for (int i = 0; i < argVal.length(); i++)
+        Serial.print('-');
+    Serial.println(' ');
+
+    Serial.println("        \\   ^__^");
+    Serial.println("         \\  (oo)\\_______");
+    Serial.println("            (__)\\       )\\/\\");
+    Serial.println("                ||----w |");
+    Serial.println("                ||     ||");
+}
+
+// Callback in case of an error
+void SerialWiFiBridgeClass::_errorCallback(cmd_error *e)
+{
+    CommandError cmdError(e); // Create wrapper object
+
+    Serial.print("ERROR: ");
+    Serial.println(cmdError.toString());
+
+    if (cmdError.hasCommand())
+    {
+        Serial.print("Did you mean \"");
+        Serial.print(cmdError.getCommand().toString());
+        Serial.println("\"?");
+    }
+}
+
+void SerialWiFiBridgeClass::initConsole()
+{
+    _cli.setOnError(_errorCallback); // Set error Callback
+    _cmdLed = _cli.addSingleArgCmd("led", _cowsayCallback);
 }
 
 void SerialWiFiBridgeClass::initOTA()
@@ -129,61 +209,61 @@ void SerialWiFiBridgeClass::initOTA()
         else
             type = "filesystem";
 
-        Serial.println("Start updating " + type);
+        _Serial.println("Start updating " + type);
     });
 
     ArduinoOTA.onEnd([]() {
-        Serial.println("\nEnd");
+        _Serial.println("\nEnd");
     });
 
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+        _Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
     });
 
     ArduinoOTA.onError([](ota_error_t error) {
-        Serial.printf("Error[%u]: ", error);
+        _Serial.printf("Error[%u]: ", error);
         if (error == OTA_AUTH_ERROR)
-            Serial.println("Auth Failed");
+            _Serial.println("Auth Failed");
         else if (error == OTA_BEGIN_ERROR)
-            Serial.println("Begin Failed");
+            _Serial.println("Begin Failed");
         else if (error == OTA_CONNECT_ERROR)
-            Serial.println("Connect Failed");
+            _Serial.println("Connect Failed");
         else if (error == OTA_RECEIVE_ERROR)
-            Serial.println("Receive Failed");
+            _Serial.println("Receive Failed");
         else if (error == OTA_END_ERROR)
-            Serial.println("End Failed");
+            _Serial.println("End Failed");
     });
 
     ArduinoOTA.setHostname(HOSTNAME);
 
-    Serial.print("- Hostname: ");
-    Serial.println(ArduinoOTA.getHostname() + ".local");
+    _Serial.print("- Hostname: ");
+    _Serial.println(ArduinoOTA.getHostname() + ".local");
 
     ArduinoOTA.begin();
-    Serial.println("- OTA Started");
+    _Serial.println("- OTA Started");
 }
 
 void SerialWiFiBridgeClass::onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
-    Serial.println("onBody()");
+    _Serial.println("onBody()");
 }
 
 void SerialWiFiBridgeClass::initServer()
 {
     _server->on(
         "/", HTTP_POST, [](AsyncWebServerRequest *request) {
-            Serial.println("[HTTP_POST] /");
+            _Serial.println("[HTTP_POST] /");
             request->send(200);
         },
         NULL, onBody);
 
     //REST API exsample
     _server->on("/A", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Serial.println("/A");
+        _Serial.println("/A");
     });
 
     _server->on("/B", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Serial.println("/B");
+        _Serial.println("/B");
     });
 }
 
@@ -197,7 +277,7 @@ void SerialWiFiBridgeClass::initClock()
     //Get NTP time
     configTzTime("JST-9", "ntp.nict.jp", "ntp.jst.mfeed.ad.jp");
     delay(2000);
-    
+
     _clocker.attach(1, SerialWiFiBridgeClass::sendClockMessage);
 }
 
@@ -210,9 +290,12 @@ void SerialWiFiBridgeClass::setup()
     initFS();
     initWiFi();
     initOTA();
-    initClock();
-    Serial.println("setup() end");
+    //initClock();
+    _Serial.println("setup() end");
 }
+
+#define _SERIAL
+#define _TELNET
 
 //for test
 void SerialWiFiBridgeClass::printClock()
@@ -220,11 +303,18 @@ void SerialWiFiBridgeClass::printClock()
     time_t t = time(NULL);
     struct tm *tm = localtime(&t);
 
+#ifndef _TELNET
     _telnet0->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
     _telnet1->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
     _telnet2->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
+#endif
 
+#ifndef _SERIAL
+    _Serial.printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    _Serial1.printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    _Serial2.printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
     log_i("HH:MM:SS = %02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
+#endif
 }
 
 void SerialWiFiBridgeClass::messageHandle(MESSAGE_ID msg_id)
@@ -244,12 +334,49 @@ void SerialWiFiBridgeClass::messageHandle(MESSAGE_ID msg_id)
     SerialWiFiBridgeClass::_message_id = MSG_NOTHING;
 }
 
+void SerialWiFiBridgeClass::_serialHandle(TelnetSpy *telnet, HardwareSerial *serial)
+{
+    // read from serial, send to telnet
+    if (serial->available())
+    {
+        int byte = serial->read();
+        telnet->write(byte);
+    }
+
+    // read from telnet, send to serial
+    if (telnet->available())
+    {
+        int byte = telnet->read();
+        serial->write(byte);
+    }
+
+    if (_cli.errored())
+    {
+        CommandError cmdError = _cli.getError();
+
+        telnet->print("ERROR: ");
+        telnet->println(cmdError.toString());
+
+        if (cmdError.hasCommand())
+        {
+            telnet->print("Did you mean \"");
+            telnet->print(cmdError.getCommand().toString());
+            telnet->println("\"?");
+        }
+    }
+
+    telnet->handle();
+}
+
 void SerialWiFiBridgeClass::handle()
 {
-    _telnet0->handle();
-    _telnet1->handle();
-    _telnet2->handle();
     ArduinoOTA.handle();
 
+    _serialHandle(_telnet0, &_Serial);
+    _serialHandle(_telnet1, &_Serial1);
+    _serialHandle(_telnet2, &_Serial2);
+
     messageHandle(SerialWiFiBridgeClass::_message_id);
+
+    delay(1);
 }

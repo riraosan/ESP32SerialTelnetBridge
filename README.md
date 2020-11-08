@@ -23,7 +23,9 @@ TBD
 
 #### esp32(lolin32 board)
 
-TBD
+Wemos Lolin32 Pinout
+![lolin32](http://blog.pagefault-limited.co.uk/wp-content/uploads/2019/04/lolon32_v1.0.1_pinout.png)
+
 
 #### esp32 libraries
 

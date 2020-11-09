@@ -196,8 +196,22 @@ void SerialWiFiBridgeClass::_errorCallback(cmd_error *e)
 
 void SerialWiFiBridgeClass::initConsole()
 {
-    _cli.setOnError(_errorCallback); // Set error Callback
-    _cmdLed = _cli.addSingleArgCmd("led", _cowsayCallback);
+    _console.begin(115200, "HAL> ", 10);
+
+    if (_console.termProbe())
+    { /* zero indicates success */
+        printf("\n"
+               "Your terminal application does not support escape sequences.\n"
+               "Line editing and history features are disabled.\n"
+               "On linux , try screen.\n"
+               "On Windows, try using Putty instead.\n");
+        _console.termDumb(true);
+    }
+
+    // add a new function "pin" to bitlash
+    _console.addFunction("pin", (bitlash_function)pin_func);
+
+    _console.consoleTaskStart(); // will start a task waiting for input and execute
 }
 
 void SerialWiFiBridgeClass::initOTA()
@@ -285,6 +299,7 @@ void SerialWiFiBridgeClass::setup()
 {
     initPort();
     initTelnet();
+    initConsole();
     initEEPROM();
     initServer();
     initFS();
@@ -350,21 +365,6 @@ void SerialWiFiBridgeClass::_serialHandle(TelnetSpy *telnet, HardwareSerial *ser
         serial->write(byte);
     }
 
-    if (_cli.errored())
-    {
-        CommandError cmdError = _cli.getError();
-
-        telnet->print("ERROR: ");
-        telnet->println(cmdError.toString());
-
-        if (cmdError.hasCommand())
-        {
-            telnet->print("Did you mean \"");
-            telnet->print(cmdError.getCommand().toString());
-            telnet->println("\"?");
-        }
-    }
-
     telnet->handle();
 }
 
@@ -378,5 +378,5 @@ void SerialWiFiBridgeClass::handle()
 
     messageHandle(SerialWiFiBridgeClass::_message_id);
 
-    delay(1);
+    yield();
 }

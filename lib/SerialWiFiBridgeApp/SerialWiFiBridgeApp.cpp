@@ -143,60 +143,13 @@ void SerialWiFiBridgeClass::initTelnet()
     _Serial.println("Serial2 Rxd is on pin: " + String(SERIAL2_RXPIN));
 }
 
-// Callback function for cowsay command
-void SerialWiFiBridgeClass::_cowsayCallback(cmd *c)
-{
-    Command cmd(c); // Create wrapper object
-
-    // Get first (and only) Argument
-    Argument arg = cmd.getArgument(0);
-
-    // Get value of argument
-    String argVal = arg.getValue();
-
-    // Print Value
-    Serial.print(' ');
-
-    for (int i = 0; i < argVal.length(); i++)
-        Serial.print('_');
-    Serial.println(' ');
-
-    Serial.print("< ");
-    Serial.print(argVal);
-    Serial.println(" >");
-
-    Serial.print(' ');
-
-    for (int i = 0; i < argVal.length(); i++)
-        Serial.print('-');
-    Serial.println(' ');
-
-    Serial.println("        \\   ^__^");
-    Serial.println("         \\  (oo)\\_______");
-    Serial.println("            (__)\\       )\\/\\");
-    Serial.println("                ||----w |");
-    Serial.println("                ||     ||");
-}
-
-// Callback in case of an error
-void SerialWiFiBridgeClass::_errorCallback(cmd_error *e)
-{
-    CommandError cmdError(e); // Create wrapper object
-
-    Serial.print("ERROR: ");
-    Serial.println(cmdError.toString());
-
-    if (cmdError.hasCommand())
-    {
-        Serial.print("Did you mean \"");
-        Serial.print(cmdError.getCommand().toString());
-        Serial.println("\"?");
-    }
-}
-
 void SerialWiFiBridgeClass::initConsole()
 {
-    _console.begin(115200, "HAL> ", 10);
+    _console.setConsoleConfig(256, 8, atoi(LOG_COLOR_CYAN), 0);
+    _console.setHistoryLength(10);
+    _console.setPromptString("[SWB]> ");
+
+    _console.begin();
 
     if (_console.termProbe())
     { /* zero indicates success */
@@ -209,9 +162,8 @@ void SerialWiFiBridgeClass::initConsole()
     }
 
     // add a new function "pin" to bitlash
-    _console.addFunction("pin", (bitlash_function)pin_func);
-
-    _console.consoleTaskStart(); // will start a task waiting for input and execute
+    //_console.addFunction("pin", (bitlash_function)pin_func);
+    //_console.consoleTaskStart(); // will start a task waiting for input and execute
 }
 
 void SerialWiFiBridgeClass::initOTA()
@@ -364,6 +316,7 @@ void SerialWiFiBridgeClass::_serialHandle(TelnetSpy *telnet, HardwareSerial *ser
         int byte = telnet->read();
         serial->write(byte);
     }
+    
 
     telnet->handle();
 }
@@ -376,6 +329,7 @@ void SerialWiFiBridgeClass::handle()
     _serialHandle(_telnet1, &_Serial1);
     _serialHandle(_telnet2, &_Serial2);
 
+    
     messageHandle(SerialWiFiBridgeClass::_message_id);
 
     yield();

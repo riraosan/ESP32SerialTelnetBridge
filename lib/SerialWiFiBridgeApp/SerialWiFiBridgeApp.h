@@ -34,7 +34,7 @@ SOFTWARE.
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
 #include <Ticker.h>
-#include <LinenoiseBitlash.h>
+#include <Console.h>
 
 #define HOSTNAME "esp32"
 #define MONITOR_SPEED 115200
@@ -78,12 +78,17 @@ private:
     DNSServer *_dns;
     AsyncWebServer *_server;
     AsyncWiFiManager *_wifiManager;
+
     TelnetSpy *_telnet0;
     TelnetSpy *_telnet1;
     TelnetSpy *_telnet2;
+
+    Console _console0; 
+    Console _console1; 
+    Console _console2; 
+
     Ticker _clocker;
-    LinenoiseBitlash _console;
-    
+
     static MESSAGE_ID _message_id;
 
     SerialWiFiBridgeClass()
@@ -112,7 +117,6 @@ private:
     static void _telnetConnected();
     static void _telnetDisconnected();
     void _serialHandle(TelnetSpy *telnet, HardwareSerial *serial);
-
 
 public:
     static SerialWiFiBridgeClass &getInstance()

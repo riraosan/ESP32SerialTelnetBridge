@@ -151,16 +151,6 @@ void SerialWiFiBridgeClass::initConsole()
 
     _console.begin();
 
-    if (_console.termProbe())
-    { /* zero indicates success */
-        printf("\n"
-               "Your terminal application does not support escape sequences.\n"
-               "Line editing and history features are disabled.\n"
-               "On linux , try screen.\n"
-               "On Windows, try using Putty instead.\n");
-        _console.termDumb(true);
-    }
-
     // add a new function "pin" to bitlash
     //_console.addFunction("pin", (bitlash_function)pin_func);
     //_console.consoleTaskStart(); // will start a task waiting for input and execute
@@ -316,7 +306,6 @@ void SerialWiFiBridgeClass::_serialHandle(TelnetSpy *telnet, HardwareSerial *ser
         int byte = telnet->read();
         serial->write(byte);
     }
-    
 
     telnet->handle();
 }
@@ -329,7 +318,6 @@ void SerialWiFiBridgeClass::handle()
     _serialHandle(_telnet1, &_Serial1);
     _serialHandle(_telnet2, &_Serial2);
 
-    
     messageHandle(SerialWiFiBridgeClass::_message_id);
 
     yield();

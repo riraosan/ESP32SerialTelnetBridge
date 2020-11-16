@@ -36,6 +36,7 @@ SOFTWARE.
 #include <Ticker.h>
 #include "../../include/arduino-esp32-Console/Console.h"
 
+
 #define HOSTNAME "esp32"
 #define MONITOR_SPEED 115200
 #define AP_NAME "ESP32-G-AP"
@@ -84,8 +85,8 @@ private:
     TelnetSpy *_telnet2;
 
     Console *_console0; 
-    Console *_console1; 
-    Console *_console2; 
+    //Console *_console1; 
+    //Console *_console2; 
 
     Ticker _clocker;
 

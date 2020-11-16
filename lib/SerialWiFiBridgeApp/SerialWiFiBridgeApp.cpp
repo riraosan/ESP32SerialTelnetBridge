@@ -27,6 +27,8 @@ SOFTWARE.
 #include <HardwareSerial.h>
 #include <esp32-hal-log.h>
 #include "SerialWiFiBridgeApp.h"
+#include "../../include/arduino-esp32-Console/Console.h"
+
 
 MESSAGE_ID SerialWiFiBridgeClass::_message_id = MSG_NOTHING;
 
@@ -145,6 +147,7 @@ void SerialWiFiBridgeClass::initTelnet()
 
 void SerialWiFiBridgeClass::initConsole()
 {
+    //_console0.begin(256, 8, atoi(ARDUHAL_LOG_COLOR_CYAN), 0);
     //_console.setConsoleConfig(256, 8, atoi(LOG_COLOR_CYAN), 0);
     //_console.setHistoryLength(10);
     //_console.setPromptString("[SWB]> ");

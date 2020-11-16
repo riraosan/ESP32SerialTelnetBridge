@@ -145,11 +145,11 @@ void SerialWiFiBridgeClass::initTelnet()
 
 void SerialWiFiBridgeClass::initConsole()
 {
-    _console.setConsoleConfig(256, 8, atoi(LOG_COLOR_CYAN), 0);
-    _console.setHistoryLength(10);
-    _console.setPromptString("[SWB]> ");
+    //_console.setConsoleConfig(256, 8, atoi(LOG_COLOR_CYAN), 0);
+    //_console.setHistoryLength(10);
+    //_console.setPromptString("[SWB]> ");
 
-    _console.begin();
+    //_console.begin();
 
     // add a new function "pin" to bitlash
     //_console.addFunction("pin", (bitlash_function)pin_func);

@@ -34,7 +34,7 @@ SOFTWARE.
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
 #include <Ticker.h>
-#include "../Console/arduino-esp32-Console/Console.h"
+#include "../../include/arduino-esp32-Console/Console.h"
 
 #define HOSTNAME "esp32"
 #define MONITOR_SPEED 115200

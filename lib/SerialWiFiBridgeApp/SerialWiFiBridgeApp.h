@@ -34,7 +34,7 @@ SOFTWARE.
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
 #include <Ticker.h>
-#include <Console.h>
+#include "../Console/arduino-esp32-Console/Console.h"
 
 #define HOSTNAME "esp32"
 #define MONITOR_SPEED 115200
@@ -83,9 +83,9 @@ private:
     TelnetSpy *_telnet1;
     TelnetSpy *_telnet2;
 
-    Console _console0; 
-    Console _console1; 
-    Console _console2; 
+    Console *_console0; 
+    Console *_console1; 
+    Console *_console2; 
 
     Ticker _clocker;
 

@@ -294,21 +294,23 @@ void SerialWiFiBridgeClass::messageHandle(MESSAGE_ID msg_id)
 
 void SerialWiFiBridgeClass::_serialHandle(TelnetSpy *telnet, HardwareSerial *serial)
 {
-    // read from serial, send to telnet
+    /*
+    int byte = 0;
     if (serial->available())
     {
-        int byte = serial->read();
+        byte = serial->read();
         telnet->write(byte);
+        telnet->handle();
     }
-
+    */
     // read from telnet, send to serial
+    // read from serial, send to telnet
     if (telnet->available())
     {
         int byte = telnet->read();
-        serial->write(byte);
+        telnet->write(byte);
+        telnet->handle();
     }
-
-    telnet->handle();
 }
 
 void SerialWiFiBridgeClass::handle()
@@ -316,8 +318,8 @@ void SerialWiFiBridgeClass::handle()
     ArduinoOTA.handle();
 
     _serialHandle(_telnet0, &_Serial);
-    _serialHandle(_telnet1, &_Serial1);
-    _serialHandle(_telnet2, &_Serial2);
+    //_serialHandle(_telnet1, &_Serial1);
+    //_serialHandle(_telnet2, &_Serial2);
 
     messageHandle(SerialWiFiBridgeClass::_message_id);
 

@@ -36,7 +36,6 @@ SOFTWARE.
 #include <Ticker.h>
 #include <Console.h>
 
-
 #define HOSTNAME "esp32"
 #define MONITOR_SPEED 115200
 #define AP_NAME "ESP32-G-AP"
@@ -51,19 +50,19 @@ SOFTWARE.
 #define SERIAL_PARAM0 SERIAL_8N1 // Data/Parity/Stop UART0
 #define SERIAL0_RXPIN 3          // receive Pin UART0
 #define SERIAL0_TXPIN 1          // transmit Pin UART0
-#define SERIAL0_TCP_PORT 8880    // Wifi Port UART0
+#define SERIAL0_TCP_PORT 55550   // Wifi Port UART0
 /*************************  COM Port 1 *******************************/
 #define UART_BAUD1 115200        // Baudrate UART1
 #define SERIAL_PARAM1 SERIAL_8N1 // Data/Parity/Stop UART1
 #define SERIAL1_RXPIN 16         // receive Pin UART1
 #define SERIAL1_TXPIN 17         // transmit Pin UART1
-#define SERIAL1_TCP_PORT 8881    // Wifi Port UART1
+#define SERIAL1_TCP_PORT 55551   // Wifi Port UART1
 /*************************  COM Port 2 *******************************/
 #define UART_BAUD2 115200        // Baudrate UART2
 #define SERIAL_PARAM2 SERIAL_8N1 // Data/Parity/Stop UART2
 #define SERIAL2_RXPIN 4          // receive Pin UART2
 #define SERIAL2_TXPIN 2          // transmit Pin UART2
-#define SERIAL2_TCP_PORT 8882    // Wifi Port UART2
+#define SERIAL2_TCP_PORT 55552   // Wifi Port UART2
 
 //Message ID
 typedef enum message_id
@@ -84,9 +83,9 @@ private:
     TelnetSpy *_telnet1;
     TelnetSpy *_telnet2;
 
-    Console *_console0; 
-    Console *_console1; 
-    Console *_console2; 
+    Console *_console0;
+    Console *_console1;
+    Console *_console2;
 
     Ticker _clocker;
 

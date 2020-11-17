@@ -109,7 +109,7 @@ private:
     SerialWiFiBridgeClass(const SerialWiFiBridgeClass &);
     SerialWiFiBridgeClass &operator=(const SerialWiFiBridgeClass &);
 
-    ~SerialWiFiBridgeClass();
+    //~SerialWiFiBridgeClass();
 
     static void _telnetConnected();
     static void _telnetDisconnected();

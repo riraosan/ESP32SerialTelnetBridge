@@ -34,7 +34,7 @@ SOFTWARE.
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
 #include <Ticker.h>
-#include "../../include/arduino-esp32-Console/Console.h"
+#include <Console.h>
 
 
 #define HOSTNAME "esp32"
@@ -85,8 +85,8 @@ private:
     TelnetSpy *_telnet2;
 
     Console *_console0; 
-    //Console *_console1; 
-    //Console *_console2; 
+    Console *_console1; 
+    Console *_console2; 
 
     Ticker _clocker;
 
@@ -100,20 +100,16 @@ private:
         _telnet0 = new TelnetSpy();
         _telnet1 = new TelnetSpy();
         _telnet2 = new TelnetSpy();
+
+        _console0 = new Console();
+        _console1 = new Console();
+        _console2 = new Console();
     }
 
     SerialWiFiBridgeClass(const SerialWiFiBridgeClass &);
     SerialWiFiBridgeClass &operator=(const SerialWiFiBridgeClass &);
 
-    ~SerialWiFiBridgeClass()
-    {
-        delete _wifiManager;
-        delete _dns;
-        delete _server;
-        delete _telnet0;
-        delete _telnet1;
-        delete _telnet2;
-    }
+    ~SerialWiFiBridgeClass();
 
     static void _telnetConnected();
     static void _telnetDisconnected();

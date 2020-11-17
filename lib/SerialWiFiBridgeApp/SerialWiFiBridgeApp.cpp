@@ -27,8 +27,6 @@ SOFTWARE.
 #include <HardwareSerial.h>
 #include <esp32-hal-log.h>
 #include "SerialWiFiBridgeApp.h"
-#include "../../include/arduino-esp32-Console/Console.h"
-
 
 MESSAGE_ID SerialWiFiBridgeClass::_message_id = MSG_NOTHING;
 

@@ -87,6 +87,10 @@ private:
     Console *_console1;
     Console *_console2;
 
+    static HardwareSerial *_Serial0;
+    static HardwareSerial *_Serial1;
+    static HardwareSerial *_Serial2;
+
     Ticker _clocker;
 
     static MESSAGE_ID _message_id;
@@ -103,16 +107,20 @@ private:
         _console0 = new Console();
         _console1 = new Console();
         _console2 = new Console();
+
+        _Serial0 = new HardwareSerial(0);
+        _Serial1 = new HardwareSerial(1);
+        _Serial2 = new HardwareSerial(2);
     }
+
+    ~SerialWiFiBridgeClass(){}
 
     SerialWiFiBridgeClass(const SerialWiFiBridgeClass &);
     SerialWiFiBridgeClass &operator=(const SerialWiFiBridgeClass &);
 
-    //~SerialWiFiBridgeClass();
-
     static void _telnetConnected();
     static void _telnetDisconnected();
-    void _serialHandle(TelnetSpy *telnet, HardwareSerial *serial);
+    void _serialHandle(TelnetSpy *telnet, HardwareSerial *serial, Console *console);
 
 public:
     static SerialWiFiBridgeClass &getInstance()

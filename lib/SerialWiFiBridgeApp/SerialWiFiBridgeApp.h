@@ -35,6 +35,7 @@ SOFTWARE.
 #include <StreamUtils.h>
 #include <Ticker.h>
 #include <Console.h>
+#include <HardwareSerial.h>
 
 #define HOSTNAME "esp32"
 #define MONITOR_SPEED 115200

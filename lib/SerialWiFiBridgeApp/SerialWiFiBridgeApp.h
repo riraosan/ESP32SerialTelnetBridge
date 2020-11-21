@@ -34,7 +34,6 @@ SOFTWARE.
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
 #include <Ticker.h>
-#include <Console.h>
 #include <HardwareSerial.h>
 
 #define HOSTNAME "esp32"
@@ -84,13 +83,9 @@ private:
     TelnetSpy *_telnet1;
     TelnetSpy *_telnet2;
 
-    Console *_console0;
-    Console *_console1;
-    Console *_console2;
-
-    static HardwareSerial *_Serial0;
-    static HardwareSerial *_Serial1;
-    static HardwareSerial *_Serial2;
+    HardwareSerial *_Serial0;
+    HardwareSerial *_Serial1;
+    HardwareSerial *_Serial2;
 
     Ticker _clocker;
 
@@ -105,10 +100,6 @@ private:
         _telnet1 = new TelnetSpy();
         _telnet2 = new TelnetSpy();
 
-        _console0 = new Console();
-        _console1 = new Console();
-        _console2 = new Console();
-
         _Serial0 = new HardwareSerial(0);
         _Serial1 = new HardwareSerial(1);
         _Serial2 = new HardwareSerial(2);
@@ -121,7 +112,7 @@ private:
 
     static void _telnetConnected();
     static void _telnetDisconnected();
-    void _serialHandle(TelnetSpy *telnet, HardwareSerial *serial, Console *console);
+    void _serialHandle(TelnetSpy *telnet, HardwareSerial *serial);
 
 public:
     static SerialWiFiBridgeClass &getInstance()
@@ -138,6 +129,7 @@ public:
 
     virtual void initWiFi();
     virtual void initOTA();
+    virtual void initSerial();
     virtual void initTelnet();
     virtual void initConsole();
     virtual void initFS();

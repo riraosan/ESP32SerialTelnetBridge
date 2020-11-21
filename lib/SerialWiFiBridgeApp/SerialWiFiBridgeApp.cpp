@@ -160,8 +160,33 @@ void SerialWiFiBridgeClass::initTelnet()
     delay(500);
 }
 
+void SerialWiFiBridgeClass::commandErrorCallback(cmd_error *cmdError)
+{
+    CommandError commandError(cmdError); // Create wrapper object
+
+    log_e("ERROR: %s", commandError.toString().c_str());
+}
+
+void SerialWiFiBridgeClass::commandCalllback(cmd *cmdline)
+{
+    Command cmd(cmdline); // Create wrapper object
+
+    // Get first (and only) Argument
+    Argument arg = cmd.getArgument(0);
+
+    // Get value of argument
+    String argVal = arg.getValue();
+
+    if (argVal == "on")
+    {
+        SerialWiFiBridgeClass::_message_id = MSG_COMMAND_CLOCK;
+    }
+}
+
 void SerialWiFiBridgeClass::initConsole()
 {
+    _cli1.setOnError(SerialWiFiBridgeClass::commandErrorCallback);
+    _command = _cli1.addSingleArgCmd("clock", commandCalllback);
 }
 
 void SerialWiFiBridgeClass::initOTA()
@@ -272,24 +297,17 @@ void SerialWiFiBridgeClass::setup()
     _Serial2->println("Serial2 setup() end.");
 }
 
-#define _TEST 0
-
 //for test
 void SerialWiFiBridgeClass::printClock()
 {
-#if _TEST
     time_t t = time(NULL);
     struct tm *tm = localtime(&t);
-    _telnet0->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
-    _telnet1->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
-    _telnet2->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
 
-    _Serial0->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
-    _Serial1->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
-    _Serial2->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
-    
-    log_i("HH:MM:SS = %02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
-#endif
+    _telnet0->printf("[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    _telnet1->printf("[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    _telnet2->printf("[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
+
+    //log_i("HH:MM:SS = %02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
 }
 
 void SerialWiFiBridgeClass::messageHandle(MESSAGE_ID msg_id)
@@ -323,6 +341,9 @@ void SerialWiFiBridgeClass::_serialHandle(TelnetSpy *telnet, HardwareSerial *ser
         String line = telnet->readStringUntil('\n');
         line += "\n"; //add Line Feed
         serial->write(line.c_str());
+
+        telnet->write(COMMAND_PROMPT);
+        _cli1.parse(line);
     }
 
     telnet->handle();

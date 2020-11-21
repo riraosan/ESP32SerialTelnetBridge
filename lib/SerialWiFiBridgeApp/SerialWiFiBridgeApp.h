@@ -35,12 +35,14 @@ SOFTWARE.
 #include <StreamUtils.h>
 #include <Ticker.h>
 #include <HardwareSerial.h>
+#include <SimpleCLI.h>
 
 #define HOSTNAME "esp32"
 #define MONITOR_SPEED 115200
 #define AP_NAME "ESP32-G-AP"
 #define AP_PASSWORD ""
 #define PORTAL_TIMEOUT 180
+#define COMMAND_PROMPT "esp32 > "
 
 //NOTE: The PIN assignment has changed and may not look straigt forward (other PINs are marke as Rx/Tx),
 //but this assignment allows to flash via USB also with hooked MAX3232 serial drivers.
@@ -87,6 +89,12 @@ private:
     HardwareSerial *_Serial1;
     HardwareSerial *_Serial2;
 
+    SimpleCLI _cli0;
+    SimpleCLI _cli1;
+    SimpleCLI _cli2;
+
+    Command _command;
+
     Ticker _clocker;
 
     static MESSAGE_ID _message_id;
@@ -121,11 +129,13 @@ public:
         return inst;
     }
 
-    static void sendClockMessage();
+    static void sendClockMessage();//Ticker
     static String processor(const String &var);
     static void onRequest(AsyncWebServerRequest *request);
     static void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
     static void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
+    static void commandErrorCallback(cmd_error* cmdError);//SimpleCLI
+    static void commandCalllback(cmd* cmdline);
 
     virtual void initWiFi();
     virtual void initOTA();

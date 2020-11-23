@@ -25,6 +25,7 @@ SOFTWARE.
 #ifndef __SerialWiFiBridgeApp_h
 #define __SerialWiFiBridgeApp_h
 
+//#include <memory>
 #include <ArduinoOTA.h>
 #include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
@@ -42,7 +43,7 @@ SOFTWARE.
 #define AP_NAME "ESP32-G-AP"
 #define AP_PASSWORD ""
 #define PORTAL_TIMEOUT 180
-#define COMMAND_PROMPT "esp32 > "
+#define COMMAND_PROMPT "~ esp$ "
 
 //NOTE: The PIN assignment has changed and may not look straigt forward (other PINs are marke as Rx/Tx),
 //but this assignment allows to flash via USB also with hooked MAX3232 serial drivers.
@@ -77,8 +78,10 @@ typedef enum message_id
 class SerialWiFiBridgeClass
 {
 private:
+    //std::unique_ptr<DNSServer> _dns;
+    //std::unique_ptr<AsyncWebServer> _server;
     DNSServer *_dns;
-    AsyncWebServer *_server;
+    AsyncWebServer *_server; 
     AsyncWiFiManager *_wifiManager;
 
     TelnetSpy *_telnet0;
@@ -93,14 +96,28 @@ private:
     SimpleCLI _cli1;
     SimpleCLI _cli2;
 
-    Command _command;
-
+    Command _command0;
+    Command _command1;
+    Command _command2;
+/*
+    Command _cmdReset;
+    Command _cmdLED;
+    Command _cmdPWM;
+    Command _cmdRelay;
+    Command _cmdStatus;
+    Command _cmdLog;
+    Command _cmdNet;
+*/
     Ticker _clocker;
 
     static MESSAGE_ID _message_id;
 
     SerialWiFiBridgeClass()
-    {
+    {   //new gcc...
+        //_dns = std::make_unique<DNSServer>();
+        //_server = std::make_unique<AsyncWebServer>(80);
+        //_wifiManager = new AsyncWiFiManager(_server.get(), _dns.get());
+        //old gcc...
         _dns = new DNSServer();
         _server = new AsyncWebServer(80);
         _wifiManager = new AsyncWiFiManager(_server, _dns);
@@ -113,14 +130,15 @@ private:
         _Serial2 = new HardwareSerial(2);
     }
 
-    ~SerialWiFiBridgeClass(){}
+    ~SerialWiFiBridgeClass() = default;
 
     SerialWiFiBridgeClass(const SerialWiFiBridgeClass &);
     SerialWiFiBridgeClass &operator=(const SerialWiFiBridgeClass &);
 
     static void _telnetConnected();
     static void _telnetDisconnected();
-    void _serialHandle(TelnetSpy *telnet, HardwareSerial *serial);
+
+    void _serialHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli);
 
 public:
     static SerialWiFiBridgeClass &getInstance()
@@ -129,23 +147,23 @@ public:
         return inst;
     }
 
-    static void sendClockMessage();//Ticker
+    static void sendClockMessage();
     static String processor(const String &var);
     static void onRequest(AsyncWebServerRequest *request);
     static void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
     static void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
-    static void commandErrorCallback(cmd_error* cmdError);//SimpleCLI
-    static void commandCalllback(cmd* cmdline);
+    static void commandErrorCallback(cmd_error *cmdError); //SimpleCLI
+    static void commandCalllback(cmd *cmdline);
 
     virtual void initWiFi();
     virtual void initOTA();
     virtual void initSerial();
     virtual void initTelnet();
+    virtual void initEEPROM();
+    virtual void initServer();
     virtual void initConsole();
     virtual void initFS();
     virtual void initPort();
-    virtual void initEEPROM();
-    virtual void initServer();
     virtual void initClock();
     virtual void printClock();
     virtual void messageHandle(MESSAGE_ID msg_id);

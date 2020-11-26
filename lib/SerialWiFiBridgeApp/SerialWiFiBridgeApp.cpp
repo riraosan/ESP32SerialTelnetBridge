@@ -154,7 +154,6 @@ void SerialWiFiBridgeClass::initTelnet()
     _telnet1->setCallbackOnConnect(SerialWiFiBridgeClass::_telnetConnected);
     _telnet1->setCallbackOnDisconnect(SerialWiFiBridgeClass::_telnetDisconnected);
     _telnet1->setPort(SERIAL1_TCP_PORT);
-    _telnet1->set
     //to begin telnet only
     _telnet1->setSerial(nullptr);
     _telnet1->begin(UART_BAUD1);

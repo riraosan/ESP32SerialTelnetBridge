@@ -1,18 +1,20 @@
 # ESP32 Serial WiFi Bridge(step1)
 
-## ✅ 仕様
+## ✅ Features
 
-- [x] スマートフォンのブラウザ画面よりWiFi接続設定可能
-- [x] シリアル出力をTelnetに表示可能
-- [ ] Telnet端末からコマンドを実行可能
+- [x] スマートフォンのブラウザ画面よりWiFi接続設定する。
+- [x] シリアル出力をTelnetに表示する。
+- [x] Telnet端末からコマンドを実行する。
 - [ ] 接続時に接続したIPアドレスを表示する。
 - [ ] 初期化ボタンで、WiFiのログイン情報を消去する。
 - [ ] 切り替えボタンでAPモード、STAモードを切り替える。
 - [ ] REST APIにアクセスして、リレーをON／OFFする。
 - [ ] REST APIにアクセスして、PWM波をポートに出力する。（サーボ駆動用）
-- [ ] デバイスの状態をステータスLEDで表示。
+- [ ] デバイスの状態をステータスLEDで表示する。
 - [ ] コマンドより通信状態を確認する。
 - [ ] リセットボタンでデバイスをハードウェアリセットする。
+
+[要求仕様書はこちら](./SPEC.md)
 
 ## ✅ 必要とするもの、要件
 
@@ -55,7 +57,7 @@ Wemos Lolin32 Pinout
 - テレメトリー用途で使用。（模型ロケット、ラジコン飛行機 etc）
 - REST APIを叩いて、遠隔で情報を取得or機器を設定or機器を操作。
 
-## 🚀 Usage
+## 🚀 How to use
 
 ```zsh
 $ git clone https://github.com/riraosan/ESP32SerialWiFiBridge.git
@@ -73,4 +75,4 @@ TODO クラスヘッダ表示
 
 ## 📝 License
 
-This software is released under the [MIT](https://github.com/riraosan/MissionControlCenter/blob/master/LICENSE) License.
+This software is released under the [MIT](https://github.com/riraosan/ESP32SerialWiFiBridge/blob/master/LICENSE) License.

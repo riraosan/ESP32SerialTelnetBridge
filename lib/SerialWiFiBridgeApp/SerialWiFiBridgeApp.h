@@ -138,7 +138,7 @@ private:
     static void _telnetConnected();
     static void _telnetDisconnected();
 
-    void _serialHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli);
+    void printEspState();
 
 public:
     static SerialWiFiBridgeClass &getInstance()
@@ -166,7 +166,9 @@ public:
     virtual void initPort();
     virtual void initClock();
     virtual void printClock();
+
     virtual void messageHandle(MESSAGE_ID msg_id);
+    virtual void consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli);
 
     void setup();
     void handle();

@@ -303,6 +303,13 @@ void SerialWiFiBridgeClass::initClock()
     //_clocker.attach(1, SerialWiFiBridgeClass::sendClockMessage);
 }
 
+void SerialWiFiBridgeClass::printEspState()
+{
+    log_n("- WiFi: %s", WiFi.SSID().c_str());
+    log_n("-  Mac: %s", WiFi.macAddress().c_str());
+    log_n("-   IP: %s", WiFi.localIP().toString().c_str());
+}
+
 void SerialWiFiBridgeClass::setup()
 {
     initPort();
@@ -315,9 +322,6 @@ void SerialWiFiBridgeClass::setup()
     initWiFi();
     initOTA();
     initClock();
-    _Serial0->println("Serial0 setup() end.");
-    _Serial1->println("Serial1 setup() end.");
-    _Serial2->println("Serial2 setup() end.");
 }
 
 //for test
@@ -333,24 +337,25 @@ void SerialWiFiBridgeClass::printClock()
     log_d("HH:MM:SS = %02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
 }
 
-void SerialWiFiBridgeClass::_serialHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli)
+void SerialWiFiBridgeClass::consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli)
 {
-    // read from serial, send to telnet
+    // read from serial, send to telnet 
+    //(not use telnetSpy method)
     if (serial->available())
     {
         telnet->write(serial->read());
     }
 
-    // read from telnet, send to serial
+    // read from telnet, send to serial 
+    //(not use telnetSpy method)
     if (telnet->available())
     {
         String line = telnet->readStringUntil('\n');
-        line += "\n"; //add Line Feed
         serial->write(line.c_str());
-
-        cli->parse(line); //include command execute
+        serial->write("\n");
 
         telnet->write(COMMAND_PROMPT);
+        cli->parse(line); //include command execute
     }
 
     telnet->handle();
@@ -377,9 +382,9 @@ void SerialWiFiBridgeClass::handle()
 {
     ArduinoOTA.handle();
 
-    _serialHandle(_telnet0, _Serial0, &_cli0);
-    _serialHandle(_telnet1, _Serial1, &_cli1);
-    _serialHandle(_telnet2, _Serial2, &_cli2);
+    //consoleHandle(_telnet0, _Serial0, &_cli0);
+    consoleHandle(_telnet1, _Serial1, &_cli1);
+    consoleHandle(_telnet2, _Serial2, &_cli2);
 
     messageHandle(SerialWiFiBridgeClass::_message_id);
 

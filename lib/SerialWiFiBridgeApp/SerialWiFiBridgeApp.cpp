@@ -103,16 +103,16 @@ void SerialWiFiBridgeClass::initSerial()
 {
     log_n("- Initializing Serial...");
 
-    _Serial0->setDebugOutput(true);
+    //_Serial0->setDebugOutput(true);
     _Serial1->setDebugOutput(true);
     _Serial2->setDebugOutput(true);
 
-    _Serial0->begin(UART_BAUD0, SERIAL_8N1, SERIAL0_RXPIN, SERIAL0_TXPIN);
+    //_Serial0->begin(UART_BAUD0, SERIAL_8N1, SERIAL0_RXPIN, SERIAL0_TXPIN);
     _Serial1->begin(UART_BAUD1, SERIAL_8N1, SERIAL1_RXPIN, SERIAL1_TXPIN);
     _Serial2->begin(UART_BAUD2, SERIAL_8N1, SERIAL2_RXPIN, SERIAL2_TXPIN);
 
-    _Serial0->println("Serial0 Txd is on pin: " + String(SERIAL0_TXPIN));
-    _Serial0->println("Serial0 Rxd is on pin: " + String(SERIAL0_RXPIN));
+    //_Serial0->println("Serial0 Txd is on pin: " + String(SERIAL0_TXPIN));
+    //_Serial0->println("Serial0 Rxd is on pin: " + String(SERIAL0_RXPIN));
 
     _Serial1->println("Serial1 Txd is on pin: " + String(SERIAL1_TXPIN));
     _Serial1->println("Serial1 Rxd is on pin: " + String(SERIAL1_RXPIN));
@@ -120,7 +120,7 @@ void SerialWiFiBridgeClass::initSerial()
     _Serial2->println("Serial2 Txd is on pin: " + String(SERIAL2_TXPIN));
     _Serial2->println("Serial2 Rxd is on pin: " + String(SERIAL2_RXPIN));
 
-    _Serial0->flush();
+    //_Serial0->flush();
     _Serial1->flush();
     _Serial2->flush();
 
@@ -141,7 +141,7 @@ void SerialWiFiBridgeClass::initTelnet()
     welcome0 += prompt;
     welcome1 += prompt;
     welcome2 += prompt;
-
+/*
     _telnet0->setWelcomeMsg((char *)welcome0.c_str());
     _telnet0->setCallbackOnConnect(SerialWiFiBridgeClass::_telnetConnected);
     _telnet0->setCallbackOnDisconnect(SerialWiFiBridgeClass::_telnetDisconnected);
@@ -149,7 +149,7 @@ void SerialWiFiBridgeClass::initTelnet()
     //to begin telnet only
     _telnet0->setSerial(nullptr);
     _telnet0->begin(UART_BAUD0);
-
+*/
     _telnet1->setWelcomeMsg((char *)welcome1.c_str());
     _telnet1->setCallbackOnConnect(SerialWiFiBridgeClass::_telnetConnected);
     _telnet1->setCallbackOnDisconnect(SerialWiFiBridgeClass::_telnetDisconnected);
@@ -337,7 +337,7 @@ void SerialWiFiBridgeClass::printClock()
     time_t t = time(nullptr);
     struct tm *tm = localtime(&t);
 
-    _telnet0->printf("\n[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    //_telnet0->printf("\n[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
     _telnet1->printf("\n[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
     _telnet2->printf("\n[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
 

@@ -84,11 +84,11 @@ private:
     AsyncWebServer *_server; 
     AsyncWiFiManager *_wifiManager;
 
-    TelnetSpy *_telnet0;
+    //TelnetSpy *_telnet0;
     TelnetSpy *_telnet1;
     TelnetSpy *_telnet2;
 
-    HardwareSerial *_Serial0;
+    //HardwareSerial *_Serial0;
     HardwareSerial *_Serial1;
     HardwareSerial *_Serial2;
 
@@ -114,7 +114,7 @@ private:
         _server = new AsyncWebServer(80);
         _wifiManager = new AsyncWiFiManager(_server, _dns);
 
-        _telnet0 = new TelnetSpy();
+        //_telnet0 = new TelnetSpy();
         _telnet1 = new TelnetSpy();
         _telnet2 = new TelnetSpy();
 

@@ -92,22 +92,14 @@ private:
     HardwareSerial *_Serial1;
     HardwareSerial *_Serial2;
 
-    SimpleCLI _cli0;
+    //SimpleCLI _cli0;
     SimpleCLI _cli1;
     SimpleCLI _cli2;
 
-    Command _command0;
+    //Command _command0;
     Command _command1;
     Command _command2;
-/*
-    Command _cmdReset;
-    Command _cmdLED;
-    Command _cmdPWM;
-    Command _cmdRelay;
-    Command _cmdStatus;
-    Command _cmdLog;
-    Command _cmdNet;
-*/
+
     Ticker _clocker;
 
     static MESSAGE_ID _message_id;
@@ -121,11 +113,12 @@ private:
         _dns = new DNSServer();
         _server = new AsyncWebServer(80);
         _wifiManager = new AsyncWiFiManager(_server, _dns);
+
         _telnet0 = new TelnetSpy();
         _telnet1 = new TelnetSpy();
         _telnet2 = new TelnetSpy();
 
-        _Serial0 = new HardwareSerial(0);
+        //_Serial0 = new HardwareSerial(0);
         _Serial1 = new HardwareSerial(1);
         _Serial2 = new HardwareSerial(2);
     }
@@ -170,8 +163,8 @@ public:
     virtual void messageHandle(MESSAGE_ID msg_id);
     virtual void consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli);
 
-    void setup();
-    void handle();
+    virtual void setup();
+    virtual void handle();
 };
 
 #endif

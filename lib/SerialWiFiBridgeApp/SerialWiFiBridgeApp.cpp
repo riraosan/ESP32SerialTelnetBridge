@@ -200,11 +200,11 @@ void SerialWiFiBridgeClass::commandCalllback(cmd *cmdline)
 
 void SerialWiFiBridgeClass::initConsole()
 {
-    _cli0.setOnError(SerialWiFiBridgeClass::commandErrorCallback);
+    //_cli0.setOnError(SerialWiFiBridgeClass::commandErrorCallback);
     _cli1.setOnError(SerialWiFiBridgeClass::commandErrorCallback);
     _cli2.setOnError(SerialWiFiBridgeClass::commandErrorCallback);
 
-    _command0 = _cli0.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllback);
+    //_command0 = _cli0.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllback);
     _command1 = _cli1.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllback);
     _command2 = _cli2.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllback);
 }
@@ -269,6 +269,7 @@ void SerialWiFiBridgeClass::onBody(AsyncWebServerRequest *request, uint8_t *data
 
 void SerialWiFiBridgeClass::initServer()
 {
+    //REST API(POST)
     _server->on(
         "/", HTTP_POST, [](AsyncWebServerRequest *request) {
             log_n("[HTTP_POST] /");
@@ -277,7 +278,7 @@ void SerialWiFiBridgeClass::initServer()
         nullptr, onBody);
 
     //TODO add REST API
-    //REST API exsample
+    //REST API(GET)
     _server->on("/test1/do.test1", HTTP_GET, [](AsyncWebServerRequest *request) {
         log_n("/test1/do.test1");
         request->send(200);
@@ -287,6 +288,12 @@ void SerialWiFiBridgeClass::initServer()
         log_n("/test2/do.test2");
         request->send(200);
     });
+
+    _server->on("/clock/print/", HTTP_GET, [](AsyncWebServerRequest *request) {
+        log_n("/clock/print/port0");
+        request->send(200);
+    });
+
 }
 
 void SerialWiFiBridgeClass::sendClockMessage()
@@ -339,23 +346,23 @@ void SerialWiFiBridgeClass::printClock()
 
 void SerialWiFiBridgeClass::consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli)
 {
-    // read from serial, send to telnet 
+    // read from serial, send to telnet
     //(not use telnetSpy method)
     if (serial->available())
     {
         telnet->write(serial->read());
     }
 
-    // read from telnet, send to serial 
+    // read from telnet, send to serial
     //(not use telnetSpy method)
     if (telnet->available())
     {
         String line = telnet->readStringUntil('\n');
-        serial->write(line.c_str());
-        serial->write("\n");
+        //serial->write(line.c_str());
+        //serial->write("\n");
 
-        telnet->write(COMMAND_PROMPT);
         cli->parse(line); //include command execute
+        telnet->write(COMMAND_PROMPT);
     }
 
     telnet->handle();

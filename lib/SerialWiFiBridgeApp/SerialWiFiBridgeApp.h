@@ -38,35 +38,6 @@ SOFTWARE.
 #include <HardwareSerial.h>
 #include <SimpleCLI.h>
 
-#define HOSTNAME "esp32"
-#define MONITOR_SPEED 115200
-#define AP_NAME "ESP32-G-AP"
-#define AP_PASSWORD ""
-#define PORTAL_TIMEOUT 180
-#define COMMAND_PROMPT "~ esp$ "
-
-//NOTE: The PIN assignment has changed and may not look straigt forward (other PINs are marke as Rx/Tx),
-//but this assignment allows to flash via USB also with hooked MAX3232 serial drivers.
-//https://github.com/AlphaLima/ESP32-Serial-Bridge.git
-/*************************  COM Port 0 *******************************/
-#define UART_BAUD0 115200        // Baudrate UART0
-#define SERIAL_PARAM0 SERIAL_8N1 // Data/Parity/Stop UART0
-#define SERIAL0_RXPIN 3          // receive Pin UART0
-#define SERIAL0_TXPIN 1          // transmit Pin UART0
-#define SERIAL0_TCP_PORT 55550   // Wifi Port UART0
-/*************************  COM Port 1 *******************************/
-#define UART_BAUD1 115200        // Baudrate UART1
-#define SERIAL_PARAM1 SERIAL_8N1 // Data/Parity/Stop UART1
-#define SERIAL1_RXPIN 16         // receive Pin UART1
-#define SERIAL1_TXPIN 17         // transmit Pin UART1
-#define SERIAL1_TCP_PORT 55551   // Wifi Port UART1
-/*************************  COM Port 2 *******************************/
-#define UART_BAUD2 115200        // Baudrate UART2
-#define SERIAL_PARAM2 SERIAL_8N1 // Data/Parity/Stop UART2
-#define SERIAL2_RXPIN 4          // receive Pin UART2
-#define SERIAL2_TXPIN 2          // transmit Pin UART2
-#define SERIAL2_TCP_PORT 55552   // Wifi Port UART2
-
 //Message ID
 typedef enum message_id
 {
@@ -78,10 +49,39 @@ typedef enum message_id
 class SerialWiFiBridgeClass
 {
 private:
+    const char *HOSTNAME = "esp32";
+    const uint32_t MONITOR_SPEED = 115200;
+    const char *AP_NAME = "ESP32-G-AP";
+    const char *AP_PASSWORD = "";
+    const uint16_t PORTAL_TIMEOUT = 180;
+    const char *COMMAND_PROMPT = "~ esp$ ";
+
+    //NOTE: The PIN assignment has changed and may not look straigt forward (other PINs are marke as Rx/Tx),
+    //but this assignment allows to flash via USB also with hooked MAX3232 serial drivers.
+    //https://github.com/AlphaLima/ESP32-Serial-Bridge.git
+    /*************************  COM Port 0 *******************************/
+    const uint32_t UART_BAUD0 = 115200;        // Baudrate UART0
+    const uint32_t SERIAL_PARAM0 = SERIAL_8N1; // Data/Parity/Stop UART0
+    const uint8_t SERIAL0_RXPIN = 3;           // receive Pin UART0
+    const uint8_t SERIAL0_TXPIN = 1;           // transmit Pin UART0
+    const uint16_t SERIAL0_TCP_PORT = 55550;   // Wifi Port UART0
+    /*************************  COM Port 1 *******************************/
+    const uint32_t UART_BAUD1 = 115200;        // Baudrate UART1
+    const uint32_t SERIAL_PARAM1 = SERIAL_8N1; // Data/Parity/Stop UART1
+    const uint8_t SERIAL1_RXPIN = 16;          // receive Pin UART1
+    const uint8_t SERIAL1_TXPIN = 17;          // transmit Pin UART1
+    const uint16_t SERIAL1_TCP_PORT = 55551;   // Wifi Port UART1
+    /*************************  COM Port 2 *******************************/
+    const uint32_t UART_BAUD2 = 115200;        // Baudrate UART2
+    const uint32_t SERIAL_PARAM2 = SERIAL_8N1; // Data/Parity/Stop UART2
+    const uint8_t SERIAL2_RXPIN = 4;           // receive Pin UART2
+    const uint8_t SERIAL2_TXPIN = 2;           // transmit Pin UART2
+    const uint16_t SERIAL2_TCP_PORT = 55552;   // Wifi Port UART2
+
     //std::unique_ptr<DNSServer> _dns;
     //std::unique_ptr<AsyncWebServer> _server;
     DNSServer *_dns;
-    AsyncWebServer *_server; 
+    AsyncWebServer *_server;
     AsyncWiFiManager *_wifiManager;
 
     //TelnetSpy *_telnet0;
@@ -104,8 +104,17 @@ private:
 
     static MESSAGE_ID _message_id;
 
+    static void _telnetConnected();
+    static void _telnetDisconnected();
+
+    void printEspState();
+
+public:
+    SerialWiFiBridgeClass(const SerialWiFiBridgeClass &);
+    SerialWiFiBridgeClass &operator=(const SerialWiFiBridgeClass &);
+
     SerialWiFiBridgeClass()
-    {   //new gcc...
+    { //new gcc...
         //_dns = std::make_unique<DNSServer>();
         //_server = std::make_unique<AsyncWebServer>(80);
         //_wifiManager = new AsyncWiFiManager(_server.get(), _dns.get());
@@ -124,21 +133,6 @@ private:
     }
 
     ~SerialWiFiBridgeClass() = default;
-
-    SerialWiFiBridgeClass(const SerialWiFiBridgeClass &);
-    SerialWiFiBridgeClass &operator=(const SerialWiFiBridgeClass &);
-
-    static void _telnetConnected();
-    static void _telnetDisconnected();
-
-    void printEspState();
-
-public:
-    static SerialWiFiBridgeClass &getInstance()
-    {
-        static SerialWiFiBridgeClass inst;
-        return inst;
-    }
 
     static void sendClockMessage();
     static String processor(const String &var);

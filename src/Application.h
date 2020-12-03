@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2020-2021riraotech.com
+Copyright (c) 2020-2021 riraotech.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,16 +22,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "Application.h"
+#ifndef _Application_h
+#define _Application_h
 
-static Application &app = Application::getInstance();
+#include "SerialWiFiBridgeApp.h"
 
-void setup()
+class Application : public SerialWiFiBridgeClass
 {
-    app.setup();
-}
+private:
+    Application();
+    ~Application();
 
-void loop()
-{
-    app.handle();
-}
+    Application(const SerialWiFiBridgeClass &);
+    Application &operator=(const Application &);
+public:
+    static Application &getInstance()
+    {
+        static Application instance;
+        return instance;
+    }
+
+    //TODO　関数をオーバーライドして必要ならばメソッドをモディファイする
+    //virtual void setup();
+    //virtual void handle();
+
+};
+
+#endif

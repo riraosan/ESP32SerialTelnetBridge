@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2020-2021riraotech.com
+Copyright (c) 2020-2021 riraotech.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,14 @@ SOFTWARE.
 
 #include "Application.h"
 
-static Application &app = Application::getInstance();
-
-void setup()
+Application::Application()
 {
-    app.setup();
+
 }
 
-void loop()
+Application::~Application()
 {
-    app.handle();
+    
 }
+
+//TODO　関数をオーバーロード、関数をオーバーライドして必要なメソッドを追加する

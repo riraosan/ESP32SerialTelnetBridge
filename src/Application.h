@@ -35,6 +35,7 @@ private:
 
     Application(const SerialWiFiBridgeClass &);
     Application &operator=(const Application &);
+
 public:
     static Application &getInstance()
     {
@@ -45,7 +46,6 @@ public:
     //TODO　関数をオーバーライドして必要ならばメソッドをモディファイする
     //virtual void setup();
     //virtual void handle();
-
 };
 
 #endif

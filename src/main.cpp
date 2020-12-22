@@ -24,14 +24,14 @@ SOFTWARE.
 
 #include "Application.h"
 
-static Application &app = Application::getInstance();
+static MyApplication &theApp = MyApplication::getInstance();
 
 void setup()
 {
-    app.setup();
+    theApp.setup();
 }
 
 void loop()
 {
-    app.handle();
+    theApp.handle();
 }

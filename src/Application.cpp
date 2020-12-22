@@ -23,15 +23,85 @@ SOFTWARE.
 */
 
 #include "Application.h"
+#include <esp32-hal-log.h>
 
-Application::Application()
+//MyApplication class is exsample to use SerialWiFiBridgeClass Library.
+MyApplication::MyApplication()
 {
-
+    _pServer = getAsyncWebServerPtr();
+    _baro = new Adafruit_MPL3115A2();
 }
 
-Application::~Application()
+MyApplication::~MyApplication()
 {
+}
+
+void MyApplication::initWebServer()
+{   
+    //REST API(GET)
+    _pServer->on("/esp/sensor/get/temperatur", HTTP_GET, [](AsyncWebServerRequest *request) {
+        log_n("/esp/sensor/get/temperatur");
+        request->send(200);
+    });
+
+    _pServer->on("/esp/sensor/get/pressur", HTTP_GET, [](AsyncWebServerRequest *request) {
+        log_n("/esp/sensor/get/pressur");
+        request->send(200);
+    });
+
+    _pServer->begin();
+    log_n("Server Started");
+}
+
+float MyApplication::getPressure()
+{
+    float pascals = _baro->getPressure();
+    log_n("%4.1f (hPa)", pascals * 0.01);
     
+    return pascals * 0.01;
 }
 
-//TODO　関数をオーバーロード、関数をオーバーライドして必要なメソッドを追加する
+float MyApplication::getTemperature()
+{
+    float tempC = _baro->getTemperature();
+    log_n("%2.1f *C", tempC);
+    
+    return tempC;
+}
+
+/*!
+ *  @brief  Set the local sea level barometric pressure
+ *  @param pascal the pressure (hPa) to use as the baseline
+ */
+void MyApplication::setSeaPressure(float hPascal)
+{
+    _baro->setSeaPressure(hPascal * 100);
+}
+
+void MyApplication::setup()
+{
+    SerialWiFiBridgeClass::setup();
+
+    if (!_baro->begin())
+    {
+        log_n("ESP32 couldn't find sensor.");
+        return;
+    }
+    else
+    {
+        log_n("ESP32 could find sensor.");
+    }
+
+    setSeaPressure(1014.9);//令和元年　平均海面気圧(hPa)
+
+    initWebServer();
+
+    getPressure();
+    getTemperature();
+}
+
+void MyApplication::handle()
+{
+    SerialWiFiBridgeClass::handle();
+}
+

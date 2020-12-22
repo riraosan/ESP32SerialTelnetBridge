@@ -139,26 +139,32 @@ public:
     static void onRequest(AsyncWebServerRequest *request);
     static void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
     static void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
-    static void commandErrorCallback(cmd_error *cmdError); //SimpleCLI
-    static void commandCalllback(cmd *cmdline);
-
+    //SimpleCLI
+    static void commandErrorCallbackSerial1(cmd_error *cmdError);
+    static void commandErrorCallbackSerial2(cmd_error *cmdError);
+    static void commandCalllbackSerial1(cmd *cmdline);
+    static void commandCalllbackSerial2(cmd *cmdline);
+    //setup
+    virtual void setup();
     virtual void initWiFi();
     virtual void initOTA();
     virtual void initSerial();
     virtual void initTelnet();
     virtual void initEEPROM();
-    virtual void initServer();
+    virtual void initWebServer();
     virtual void initConsole();
     virtual void initFS();
     virtual void initPort();
     virtual void initClock();
     virtual void printClock();
-
+    //loop
     virtual void messageHandle(MESSAGE_ID msg_id);
     virtual void consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli);
 
-    virtual void setup();
     virtual void handle();
+
+    AsyncWebServer* getAsyncWebServerPtr();
+
 };
 
 #endif

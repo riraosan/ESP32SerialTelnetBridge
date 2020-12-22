@@ -141,7 +141,7 @@ void SerialWiFiBridgeClass::initTelnet()
     welcome0 += prompt;
     welcome1 += prompt;
     welcome2 += prompt;
-/*
+    /*
     _telnet0->setWelcomeMsg((char *)welcome0.c_str());
     _telnet0->setCallbackOnConnect(SerialWiFiBridgeClass::_telnetConnected);
     _telnet0->setCallbackOnDisconnect(SerialWiFiBridgeClass::_telnetDisconnected);
@@ -154,6 +154,7 @@ void SerialWiFiBridgeClass::initTelnet()
     _telnet1->setCallbackOnConnect(SerialWiFiBridgeClass::_telnetConnected);
     _telnet1->setCallbackOnDisconnect(SerialWiFiBridgeClass::_telnetDisconnected);
     _telnet1->setPort(SERIAL1_TCP_PORT);
+    _telnet1->setBufferSize(6000);
     //to begin telnet only
     _telnet1->setSerial(nullptr);
     _telnet1->begin(UART_BAUD1);
@@ -162,6 +163,7 @@ void SerialWiFiBridgeClass::initTelnet()
     _telnet2->setCallbackOnConnect(SerialWiFiBridgeClass::_telnetConnected);
     _telnet2->setCallbackOnDisconnect(SerialWiFiBridgeClass::_telnetDisconnected);
     _telnet2->setPort(SERIAL2_TCP_PORT);
+    _telnet2->setBufferSize(6000);
     //to begin telnet only
     _telnet2->setSerial(nullptr);
     _telnet2->begin(UART_BAUD2);
@@ -169,14 +171,19 @@ void SerialWiFiBridgeClass::initTelnet()
     delay(500);
 }
 
-void SerialWiFiBridgeClass::commandErrorCallback(cmd_error *cmdError)
+void SerialWiFiBridgeClass::commandErrorCallbackSerial1(cmd_error *cmdError)
 {
     CommandError commandError(cmdError); // Create wrapper object
-
-    log_e("ERROR: %s", commandError.toString().c_str());
+    log_e("ERROR: (Serial1) %s", commandError.toString().c_str());
 }
 
-void SerialWiFiBridgeClass::commandCalllback(cmd *cmdline)
+void SerialWiFiBridgeClass::commandErrorCallbackSerial2(cmd_error *cmdError)
+{
+    CommandError commandError(cmdError); // Create wrapper object
+    log_e("ERROR: (Serial2) %s", commandError.toString().c_str());
+}
+
+void SerialWiFiBridgeClass::commandCalllbackSerial1(cmd *cmdline)
 {
     Command command(cmdline); // Create wrapper object
 
@@ -198,15 +205,19 @@ void SerialWiFiBridgeClass::commandCalllback(cmd *cmdline)
     }
 }
 
+void SerialWiFiBridgeClass::commandCalllbackSerial2(cmd *cmdline)
+{
+}
+
 void SerialWiFiBridgeClass::initConsole()
 {
     //_cli0.setOnError(SerialWiFiBridgeClass::commandErrorCallback);
-    _cli1.setOnError(SerialWiFiBridgeClass::commandErrorCallback);
-    _cli2.setOnError(SerialWiFiBridgeClass::commandErrorCallback);
+    _cli1.setOnError(SerialWiFiBridgeClass::commandErrorCallbackSerial1);
+    _cli2.setOnError(SerialWiFiBridgeClass::commandErrorCallbackSerial2);
 
     //_command0 = _cli0.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllback);
-    _command1 = _cli1.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllback);
-    _command2 = _cli2.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllback);
+    _command1 = _cli1.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllbackSerial1);
+    _command2 = _cli2.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllbackSerial2);
 }
 
 void SerialWiFiBridgeClass::initOTA()
@@ -267,8 +278,9 @@ void SerialWiFiBridgeClass::onBody(AsyncWebServerRequest *request, uint8_t *data
     ;
 }
 
-void SerialWiFiBridgeClass::initServer()
+void SerialWiFiBridgeClass::initWebServer()
 {
+    log_n("- Initializing Server...");
     //REST API(POST)
     _server->on(
         "/", HTTP_POST, [](AsyncWebServerRequest *request) {
@@ -277,23 +289,12 @@ void SerialWiFiBridgeClass::initServer()
         },
         nullptr, onBody);
 
-    //TODO add REST API
     //REST API(GET)
-    _server->on("/test1/do.test1", HTTP_GET, [](AsyncWebServerRequest *request) {
-        log_n("/test1/do.test1");
+    _server->on("/esp/clock", HTTP_GET, [](AsyncWebServerRequest *request) {
+        log_n("/esp/clock");
+        SerialWiFiBridgeClass::_message_id = MSG_COMMAND_CLOCK;
         request->send(200);
     });
-
-    _server->on("/test2/do.test2", HTTP_GET, [](AsyncWebServerRequest *request) {
-        log_n("/test2/do.test2");
-        request->send(200);
-    });
-
-    _server->on("/clock/print/", HTTP_GET, [](AsyncWebServerRequest *request) {
-        log_n("/clock/print/port0");
-        request->send(200);
-    });
-
 }
 
 void SerialWiFiBridgeClass::sendClockMessage()
@@ -317,20 +318,6 @@ void SerialWiFiBridgeClass::printEspState()
     log_n("-   IP: %s", WiFi.localIP().toString().c_str());
 }
 
-void SerialWiFiBridgeClass::setup()
-{
-    initPort();
-    initConsole();
-    initSerial();
-    initTelnet();
-    initEEPROM();
-    initServer();
-    initFS();
-    initWiFi();
-    initOTA();
-    initClock();
-}
-
 //for test
 void SerialWiFiBridgeClass::printClock()
 {
@@ -338,8 +325,11 @@ void SerialWiFiBridgeClass::printClock()
     struct tm *tm = localtime(&t);
 
     //_telnet0->printf("\n[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
-    _telnet1->printf("\n[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
-    _telnet2->printf("\n[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    _telnet1->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    _telnet2->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
+
+    _telnet1->printf("\r\n");
+    _telnet2->printf("\r\n");
 
     log_d("HH:MM:SS = %02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
 }
@@ -353,13 +343,13 @@ void SerialWiFiBridgeClass::consoleHandle(TelnetSpy *telnet, HardwareSerial *ser
         telnet->write(serial->read());
     }
 
+    telnet->handle();
+
     // read from telnet, send to serial
     //(not use telnetSpy method)
     if (telnet->available())
     {
         String line = telnet->readStringUntil('\n');
-        //serial->write(line.c_str());
-        //serial->write("\n");
 
         cli->parse(line); //include command execute
         telnet->write(COMMAND_PROMPT);
@@ -383,6 +373,25 @@ void SerialWiFiBridgeClass::messageHandle(MESSAGE_ID msg_id)
     }
 
     SerialWiFiBridgeClass::_message_id = MSG_NOTHING;
+}
+
+AsyncWebServer *SerialWiFiBridgeClass::getAsyncWebServerPtr()
+{
+    return _server;
+}
+
+void SerialWiFiBridgeClass::setup()
+{
+    initPort();
+    initConsole();
+    initSerial();
+    initTelnet();
+    initEEPROM();
+    SerialWiFiBridgeClass::initWebServer();
+    //initFS();
+    initWiFi();
+    initOTA();
+    initClock();
 }
 
 void SerialWiFiBridgeClass::handle()

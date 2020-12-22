@@ -22,30 +22,39 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef _Application_h
-#define _Application_h
+#ifndef _MyApplication_h
+#define _MyApplication_h
 
-#include "SerialWiFiBridgeApp.h"
+#include <Wire.h>
+#include <Adafruit_MPL3115A2.h>
+#include <SerialWiFiBridgeApp.h>
 
-class Application : public SerialWiFiBridgeClass
+class MyApplication : public SerialWiFiBridgeClass
 {
 private:
-    Application();
-    ~Application();
+    Adafruit_MPL3115A2 *_baro;
+    AsyncWebServer *_pServer;
 
-    Application(const SerialWiFiBridgeClass &);
-    Application &operator=(const Application &);
+    MyApplication();
+    ~MyApplication();
+
+    MyApplication(const MyApplication &);
+    MyApplication &operator=(const MyApplication &);
 
 public:
-    static Application &getInstance()
+    static MyApplication &getInstance()
     {
-        static Application instance;
+        static MyApplication instance;
         return instance;
     }
 
-    //TODO　関数をオーバーライドして必要ならばメソッドをモディファイする
-    //virtual void setup();
-    //virtual void handle();
+    void initWebServer();
+    void setup();
+    void handle();
+
+    float getPressure();
+    float getTemperature();
+    void setSeaPressure(float pascal);
 };
 
 #endif

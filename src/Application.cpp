@@ -28,8 +28,14 @@ SOFTWARE.
 //MyApplication class is exsample to use SerialWiFiBridgeClass Library.
 MyApplication::MyApplication()
 {
-    _pServer = getAsyncWebServerPtr();
+    _server = new AsyncWebServer(80);
+
+#ifdef MPL3115A2
     _baro = new Adafruit_MPL3115A2();
+#endif
+#ifdef BME280
+    _bme = new Adafruit_BME280();
+#endif
 }
 
 MyApplication::~MyApplication()
@@ -37,27 +43,35 @@ MyApplication::~MyApplication()
 }
 
 void MyApplication::initWebServer()
-{   
-    //REST API(GET)
-    _pServer->on("/esp/sensor/get/temperatur", HTTP_GET, [](AsyncWebServerRequest *request) {
-        log_n("/esp/sensor/get/temperatur");
-        request->send(200);
+{
+
+    //BME280 API(GET)                                lambda-introducer... I dont understand.
+    _server->on("/esp/sensor/temperatur", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_n("/esp/sensor/temperatur");
     });
 
-    _pServer->on("/esp/sensor/get/pressur", HTTP_GET, [](AsyncWebServerRequest *request) {
-        log_n("/esp/sensor/get/pressur");
-        request->send(200);
+    _server->on("/esp/sensor/pressur", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_n("/esp/sensor/pressur");
     });
 
-    _pServer->begin();
+    _server->on("/esp/sensor/humidity", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_n("/esp/sensor/humidity");
+    });
+
+    _server->on("/esp/sensor/altitude", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_n("/esp/sensor/altitude");
+    });
+
+    _server->begin();
     log_n("Server Started");
 }
 
+#ifdef MPL3115A2
 float MyApplication::getPressure()
 {
     float pascals = _baro->getPressure();
     log_n("%4.1f (hPa)", pascals * 0.01);
-    
+
     return pascals * 0.01;
 }
 
@@ -65,7 +79,7 @@ float MyApplication::getTemperature()
 {
     float tempC = _baro->getTemperature();
     log_n("%2.1f *C", tempC);
-    
+
     return tempC;
 }
 
@@ -77,11 +91,54 @@ void MyApplication::setSeaPressure(float hPascal)
 {
     _baro->setSeaPressure(hPascal * 100);
 }
+#endif
+
+#ifdef BME280
+float MyApplication::getTemperature(void)
+{
+    float value = _bme->readTemperature();
+    log_n("Temperature = %2.1f*C", value);
+
+    return value;
+}
+
+float MyApplication::getPressure(void)
+{
+    float pascals = _bme->readPressure();
+    log_n("Pressure = %4.1f (hPa)", pascals / 100.0F);
+
+    return pascals / 100.0F;
+}
+
+float MyApplication::getHumidity(void)
+{
+    float humidity = _bme->readHumidity();
+    log_n("Humidity = %2.1f %", humidity);
+
+    return humidity;
+}
+
+float MyApplication::getAltitude(float seaLevel)
+{
+    float altitude = _bme->readAltitude(SEALEVELPRESSURE_HPA);
+    log_n("Altitude = %4.1f m", altitude);
+
+    return altitude;
+}
+
+uint32_t MyApplication::getSensorID(void)
+{
+    uint32_t id = _bme->sensorID();
+    log_n("Sensor ID = %d", id);
+
+    return id;
+}
+#endif
 
 void MyApplication::setup()
 {
     SerialWiFiBridgeClass::setup();
-
+#ifdef MPL3115A2
     if (!_baro->begin())
     {
         log_n("ESP32 couldn't find sensor.");
@@ -92,16 +149,38 @@ void MyApplication::setup()
         log_n("ESP32 could find sensor.");
     }
 
-    setSeaPressure(1014.9);//令和元年　平均海面気圧(hPa)
-
-    initWebServer();
-
+    setSeaPressure(SEALEVELPRESSURE_HPA);
     getPressure();
     getTemperature();
+#endif
+#ifdef BME280
+
+    if (!_bme->begin(BME280_ADDRESS_ALTERNATE))
+    {
+        log_n("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
+        log_n("SensorID was: 0x%x", _bme->sensorID());
+        log_n("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
+        log_n("   ID of 0x56-0x58 represents a BMP 280,\n");
+        log_n("        ID of 0x60 represents a BME 280.\n");
+        log_n("        ID of 0x61 represents a BME 680.\n");
+        while (1)
+            delay(10);
+    }
+    else
+    {
+        log_n("ESP could find a BME280 sensor!");
+    }
+
+    getTemperature();
+    getPressure();
+    getHumidity();
+    getAltitude(SEALEVELPRESSURE_HPA);
+    getSensorID();
+#endif
+    initWebServer();
 }
 
 void MyApplication::handle()
 {
     SerialWiFiBridgeClass::handle();
 }
-

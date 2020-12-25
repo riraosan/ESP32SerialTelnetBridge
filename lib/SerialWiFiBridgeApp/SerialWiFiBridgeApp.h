@@ -32,6 +32,7 @@ SOFTWARE.
 #include <ESPAsyncWiFiManager.h>
 #include <TelnetSpy.h>
 #include <EEPROM.h>
+#include <AsyncJson.h>
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
 #include <Ticker.h>

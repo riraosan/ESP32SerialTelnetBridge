@@ -108,6 +108,10 @@ void SerialWiFiBridgeClass::initSerial()
     _Serial1->setDebugOutput(true);
     _Serial2->setDebugOutput(true);
 
+    //set buffer sizze
+    _Serial1->setRxBufferSize(SERIAL1_BUFFER_SIZE);
+    _Serial2->setRxBufferSize(SERIAL2_BUFFER_SIZE);
+
     //_Serial0->begin(UART_BAUD0, SERIAL_8N1, SERIAL0_RXPIN, SERIAL0_TXPIN);
     _Serial1->begin(UART_BAUD1, SERIAL_8N1, SERIAL1_RXPIN, SERIAL1_TXPIN);
     _Serial2->begin(UART_BAUD2, SERIAL_8N1, SERIAL2_RXPIN, SERIAL2_TXPIN);

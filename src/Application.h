@@ -46,7 +46,6 @@ private:
     Adafruit_BME280 *_bme;
 #endif
     StaticJsonDocument<200> _root;
-    AsyncJsonResponse *_response;
 
     MyApplication();
     ~MyApplication();
@@ -77,4 +76,3 @@ public:
     uint32_t getSensorID(void);
 #endif
 };
-

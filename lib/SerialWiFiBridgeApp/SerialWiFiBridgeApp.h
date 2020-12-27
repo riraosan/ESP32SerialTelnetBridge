@@ -71,12 +71,14 @@ private:
     const uint8_t SERIAL1_RXPIN = 16;          // receive Pin UART1
     const uint8_t SERIAL1_TXPIN = 17;          // transmit Pin UART1
     const uint16_t SERIAL1_TCP_PORT = 55551;   // Wifi Port UART1
+    const size_t SERIAL1_BUFFER_SIZE = 1024;   // RX Buffer Size UART1
     /*************************  COM Port 2 *******************************/
     const uint32_t UART_BAUD2 = 115200;        // Baudrate UART2
     const uint32_t SERIAL_PARAM2 = SERIAL_8N1; // Data/Parity/Stop UART2
     const uint8_t SERIAL2_RXPIN = 4;           // receive Pin UART2
     const uint8_t SERIAL2_TXPIN = 2;           // transmit Pin UART2
     const uint16_t SERIAL2_TCP_PORT = 55552;   // Wifi Port UART2
+    const size_t SERIAL2_BUFFER_SIZE = 1024;   // RX Buffer Size UART2
 
     //std::unique_ptr<DNSServer> _dns;
     //std::unique_ptr<AsyncWebServer> _server;
@@ -118,6 +120,7 @@ public:
         //_dns = std::make_unique<DNSServer>();
         //_server = std::make_unique<AsyncWebServer>(80);
         //_wifiManager = new AsyncWiFiManager(_server.get(), _dns.get());
+
         //old gcc...
         _dns = new DNSServer();
         _server = new AsyncWebServer(80);
@@ -163,6 +166,5 @@ public:
 
     virtual void handle();
 
-    AsyncWebServer* getAsyncWebServerPtr();
-
+    AsyncWebServer *getAsyncWebServerPtr();
 };

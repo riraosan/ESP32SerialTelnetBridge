@@ -29,7 +29,6 @@ SOFTWARE.
 MyApplication::MyApplication()
 {
     _server = new AsyncWebServer(80);
-    _response = new AsyncJsonResponse();
 
 #ifdef MPL3115A2
     _baro = new Adafruit_MPL3115A2();
@@ -45,7 +44,6 @@ MyApplication::~MyApplication()
 
 void MyApplication::initWebServer()
 {
-
     //BME280 API(GET)                                lambda-introducer... I dont understand.
     _server->on("/esp/sensor/temperatur", HTTP_GET, [this](AsyncWebServerRequest *request) {
         log_n("/esp/sensor/temperatur");
@@ -82,6 +80,19 @@ void MyApplication::initWebServer()
         String response;
 
         _root["id"] = getSensorID();
+        _root["altitude"] = getAltitude(SEALEVELPRESSURE_HPA);
+        serializeJson(_root, response);
+        request->send(200, "application/json", response);
+    });
+
+    _server->on("/esp/sensor/all", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_n("/esp/sensor/all");
+        String response;
+
+        _root["id"] = getSensorID();
+        _root["temperatur"] = getTemperature();
+        _root["pressur"] = getPressure();
+        _root["humidity"] = getHumidity();
         _root["altitude"] = getAltitude(SEALEVELPRESSURE_HPA);
         serializeJson(_root, response);
         request->send(200, "application/json", response);

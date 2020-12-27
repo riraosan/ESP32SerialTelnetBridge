@@ -29,6 +29,7 @@ SOFTWARE.
 MyApplication::MyApplication()
 {
     _server = new AsyncWebServer(80);
+    _response = new AsyncJsonResponse();
 
 #ifdef MPL3115A2
     _baro = new Adafruit_MPL3115A2();
@@ -48,18 +49,47 @@ void MyApplication::initWebServer()
     //BME280 API(GET)                                lambda-introducer... I dont understand.
     _server->on("/esp/sensor/temperatur", HTTP_GET, [this](AsyncWebServerRequest *request) {
         log_n("/esp/sensor/temperatur");
+        String response;
+
+        _root["id"] = getSensorID();
+        _root["temperatur"] = getTemperature();
+        serializeJson(_root, response);
+        request->send(200, "application/json", response);
     });
 
     _server->on("/esp/sensor/pressur", HTTP_GET, [this](AsyncWebServerRequest *request) {
         log_n("/esp/sensor/pressur");
+        String response;
+
+        _root["id"] = getSensorID();
+        _root["pressur"] = getPressure();
+        serializeJson(_root, response);
+        request->send(200, "application/json", response);
     });
 
     _server->on("/esp/sensor/humidity", HTTP_GET, [this](AsyncWebServerRequest *request) {
         log_n("/esp/sensor/humidity");
+        String response;
+
+        _root["id"] = getSensorID();
+        _root["humidity"] = getHumidity();
+        serializeJson(_root, response);
+        request->send(200, "application/json", response);
     });
 
     _server->on("/esp/sensor/altitude", HTTP_GET, [this](AsyncWebServerRequest *request) {
         log_n("/esp/sensor/altitude");
+        String response;
+
+        _root["id"] = getSensorID();
+        _root["altitude"] = getAltitude(SEALEVELPRESSURE_HPA);
+        serializeJson(_root, response);
+        request->send(200, "application/json", response);
+    });
+
+    _server->onNotFound([](AsyncWebServerRequest *request) {
+        log_n("onNotFound");
+        request->send(404, "application/json", "{\"message\":\"Not found\"}");
     });
 
     _server->begin();
@@ -83,10 +113,6 @@ float MyApplication::getTemperature()
     return tempC;
 }
 
-/*!
- *  @brief  Set the local sea level barometric pressure
- *  @param pascal the pressure (hPa) to use as the baseline
- */
 void MyApplication::setSeaPressure(float hPascal)
 {
     _baro->setSeaPressure(hPascal * 100);
@@ -154,7 +180,6 @@ void MyApplication::setup()
     getTemperature();
 #endif
 #ifdef BME280
-
     if (!_bme->begin(BME280_ADDRESS_ALTERNATE))
     {
         log_n("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
@@ -169,6 +194,7 @@ void MyApplication::setup()
     else
     {
         log_n("ESP could find a BME280 sensor!");
+        log_n("SensorID was: 0x%x", _bme->sensorID());
     }
 
     getTemperature();
@@ -178,9 +204,4 @@ void MyApplication::setup()
     getSensorID();
 #endif
     initWebServer();
-}
-
-void MyApplication::handle()
-{
-    SerialWiFiBridgeClass::handle();
 }

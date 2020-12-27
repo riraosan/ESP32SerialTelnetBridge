@@ -22,8 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef __SerialWiFiBridgeApp_h
-#define __SerialWiFiBridgeApp_h
+#pragma once
 
 //#include <memory>
 #include <ArduinoOTA.h>
@@ -167,5 +166,3 @@ public:
     AsyncWebServer* getAsyncWebServerPtr();
 
 };
-
-#endif

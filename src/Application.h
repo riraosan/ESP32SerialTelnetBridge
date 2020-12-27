@@ -22,8 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef _MyApplication_h
-#define _MyApplication_h
+#pragma once
 
 #include <Wire.h>
 #ifdef MPL3115A2
@@ -46,6 +45,8 @@ private:
 #ifdef BME280
     Adafruit_BME280 *_bme;
 #endif
+    StaticJsonDocument<200> _root;
+    AsyncJsonResponse *_response;
 
     MyApplication();
     ~MyApplication();
@@ -62,7 +63,7 @@ public:
 
     void initWebServer();
     void setup();
-    void handle();
+    //void handle();
 #ifdef MPL3115A2
     float getPressure();
     float getTemperature();
@@ -77,4 +78,3 @@ public:
 #endif
 };
 
-#endif

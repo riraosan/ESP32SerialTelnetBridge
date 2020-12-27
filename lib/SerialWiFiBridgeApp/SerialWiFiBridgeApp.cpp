@@ -30,11 +30,12 @@ SOFTWARE.
 MESSAGE_ID SerialWiFiBridgeClass::_message_id = MSG_NOTHING;
 
 /*
-    log_e("")
-    log_w("")
-    log_i("")
-    log_d("")
-    log_v("")
+    log_e("")：エラー
+    log_w("")：警告
+    log_i("")：情報
+    log_d("")：デバッグ
+    log_v("")：verbose?
+    log_n("")：通常
 */
 
 void SerialWiFiBridgeClass::initPort()

@@ -24,17 +24,24 @@ SOFTWARE.
 
 #include "Application.h"
 #include <esp32-hal-log.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
 
 //MyApplication class is exsample to use SerialWiFiBridgeClass Library.
 MyApplication::MyApplication()
 {
-    _server = new AsyncWebServer(80);
-
+    _sensor_ID = 0;
+    //_server = new AsyncWebServer(80);
+    _server = getAsyncWebServerPtr();
 #ifdef MPL3115A2
     _baro = new Adafruit_MPL3115A2();
 #endif
 #ifdef BME280
     _bme = new Adafruit_BME280();
+
+    _pressur = _bme->getPressureSensor();
+    _temperatur = _bme->getTemperatureSensor();
+    _humidity = _bme->getHumiditySensor();
 #endif
 }
 
@@ -44,74 +51,80 @@ MyApplication::~MyApplication()
 
 void MyApplication::initWebServer()
 {
-    //BME280 API(GET)                                lambda-introducer... I dont understand.
+    SerialWiFiBridgeClass::initWebServer();
+    //BME280 API(GET)                                lambda-introducer... I couldn't understand...
     _server->on("/esp/sensor/temperatur", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_n("/esp/sensor/temperatur");
+        log_d("/esp/sensor/temperatur");
         String response;
 
-        _root["id"] = getSensorID();
+        _root["id"] = _sensor_ID;
         _root["temperatur"] = getTemperature();
         serializeJson(_root, response);
+
         request->send(200, "application/json", response);
     });
 
     _server->on("/esp/sensor/pressur", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_n("/esp/sensor/pressur");
+        log_d("/esp/sensor/pressur");
         String response;
 
-        _root["id"] = getSensorID();
+        _root["id"] = _sensor_ID;
         _root["pressur"] = getPressure();
         serializeJson(_root, response);
+
         request->send(200, "application/json", response);
     });
 
     _server->on("/esp/sensor/humidity", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_n("/esp/sensor/humidity");
+        log_d("/esp/sensor/humidity");
         String response;
 
-        _root["id"] = getSensorID();
+        _root["id"] = _sensor_ID;
         _root["humidity"] = getHumidity();
         serializeJson(_root, response);
+
         request->send(200, "application/json", response);
     });
 
     _server->on("/esp/sensor/altitude", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_n("/esp/sensor/altitude");
+        log_d("/esp/sensor/altitude");
         String response;
 
-        _root["id"] = getSensorID();
+        _root["id"] = _sensor_ID;
         _root["altitude"] = getAltitude(SEALEVELPRESSURE_HPA);
         serializeJson(_root, response);
+
         request->send(200, "application/json", response);
     });
 
     _server->on("/esp/sensor/all", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_n("/esp/sensor/all");
+        log_d("/esp/sensor/all");
         String response;
 
-        _root["id"] = getSensorID();
+        _root["id"] = _sensor_ID;
         _root["temperatur"] = getTemperature();
         _root["pressur"] = getPressure();
         _root["humidity"] = getHumidity();
         _root["altitude"] = getAltitude(SEALEVELPRESSURE_HPA);
         serializeJson(_root, response);
+
         request->send(200, "application/json", response);
     });
 
     _server->onNotFound([](AsyncWebServerRequest *request) {
-        log_n("onNotFound");
+        log_d("onNotFound");
         request->send(404, "application/json", "{\"message\":\"Not found\"}");
     });
 
     _server->begin();
-    log_n("Server Started");
+    log_d("Server Started");
 }
 
 #ifdef MPL3115A2
 float MyApplication::getPressure()
 {
     float pascals = _baro->getPressure();
-    log_n("%4.1f (hPa)", pascals * 0.01);
+    log_d("%4.1f (hPa)", pascals * 0.01);
 
     return pascals * 0.01;
 }
@@ -119,7 +132,7 @@ float MyApplication::getPressure()
 float MyApplication::getTemperature()
 {
     float tempC = _baro->getTemperature();
-    log_n("%2.1f *C", tempC);
+    log_d("%2.1f *C", tempC);
 
     return tempC;
 }
@@ -133,40 +146,60 @@ void MyApplication::setSeaPressure(float hPascal)
 #ifdef BME280
 float MyApplication::getTemperature(void)
 {
-    float value = _bme->readTemperature();
-    log_n("Temperature = %2.1f*C", value);
+    if (_bme->takeForcedMeasurement())
+    {
+        float value = _bme->readTemperature();
+        log_d("Temperature = %2.1f*C", value);
 
-    return value;
+        return value;
+    }
+
+    return -1;
 }
 
 float MyApplication::getPressure(void)
 {
-    float pascals = _bme->readPressure();
-    log_n("Pressure = %4.1f (hPa)", pascals / 100.0F);
+    if (_bme->takeForcedMeasurement())
+    {
+        float pascals = _bme->readPressure();
+        log_d("Pressure = %4.1f (hPa)", pascals / 100.0F);
 
-    return pascals / 100.0F;
+        return pascals / 100.0F;
+    }
+
+    return -1;
 }
 
 float MyApplication::getHumidity(void)
 {
-    float humidity = _bme->readHumidity();
-    log_n("Humidity = %2.1f %", humidity);
+    if (_bme->takeForcedMeasurement())
+    {
+        float humidity = _bme->readHumidity();
+        log_d("Humidity = %2.1f %", humidity);
 
-    return humidity;
+        return humidity;
+    }
+
+    return -1;
 }
 
 float MyApplication::getAltitude(float seaLevel)
 {
-    float altitude = _bme->readAltitude(SEALEVELPRESSURE_HPA);
-    log_n("Altitude = %4.1f m", altitude);
+    if (_bme->takeForcedMeasurement())
+    {
+        float altitude = _bme->readAltitude(SEALEVELPRESSURE_HPA);
+        log_d("Altitude = %4.1f m", altitude);
 
-    return altitude;
+        return altitude;
+    }
+
+    return -1;
 }
 
 uint32_t MyApplication::getSensorID(void)
 {
     uint32_t id = _bme->sensorID();
-    log_n("Sensor ID = %d", id);
+    log_d("Sensor ID = %d", id);
 
     return id;
 }
@@ -178,12 +211,12 @@ void MyApplication::setup()
 #ifdef MPL3115A2
     if (!_baro->begin())
     {
-        log_n("ESP32 couldn't find sensor.");
+        log_d("ESP32 couldn't find sensor.");
         return;
     }
     else
     {
-        log_n("ESP32 could find sensor.");
+        log_d("ESP32 could find sensor.");
     }
 
     setSeaPressure(SEALEVELPRESSURE_HPA);
@@ -193,26 +226,33 @@ void MyApplication::setup()
 #ifdef BME280
     if (!_bme->begin(BME280_ADDRESS_ALTERNATE))
     {
-        log_n("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
-        log_n("SensorID was: 0x%x", _bme->sensorID());
-        log_n("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
-        log_n("   ID of 0x56-0x58 represents a BMP 280,\n");
-        log_n("        ID of 0x60 represents a BME 280.\n");
-        log_n("        ID of 0x61 represents a BME 680.\n");
+        log_d("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
+        log_d("SensorID was: 0x%x", _bme->sensorID());
+        log_d("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
+        log_d("   ID of 0x56-0x58 represents a BMP 280,\n");
+        log_d("        ID of 0x60 represents a BME 280.\n");
+        log_d("        ID of 0x61 represents a BME 680.\n");
         while (1)
             delay(10);
     }
     else
     {
-        log_n("ESP could find a BME280 sensor!");
-        log_n("SensorID was: 0x%x", _bme->sensorID());
+        log_d("ESP could find a BME280 sensor!");
+        log_d("SensorID was: 0x%x", _bme->sensorID());
     }
 
-    getTemperature();
-    getPressure();
-    getHumidity();
-    getAltitude(SEALEVELPRESSURE_HPA);
-    getSensorID();
+    _bme->setSampling(Adafruit_BME280::sensor_mode::MODE_FORCED);
+    delay(100);
+
+    _pressur = _bme->getPressureSensor();
+    _temperatur = _bme->getTemperatureSensor();
+    _humidity = _bme->getHumiditySensor();
+
+    //getTemperature();
+    //getPressure();
+    //getHumidity();
+    //getAltitude(SEALEVELPRESSURE_HPA);
+    _sensor_ID = getSensorID();
 #endif
     initWebServer();
 }

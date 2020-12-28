@@ -39,13 +39,12 @@ SOFTWARE.
 #include <SimpleCLI.h>
 
 //Message ID
-typedef enum message_id
+enum class ENUM_MESSAGE_ID
 {
-    MSG_COMMAND_RESET = 0,
+    MSG_COMMAND_RESET,
     MSG_COMMAND_CLOCK,
-    MSG_NOTHING = 0xFFFF
-} MESSAGE_ID;
-
+    MSG_COMMAND_NOTHING
+};
 class SerialWiFiBridgeClass
 {
 private:
@@ -104,12 +103,8 @@ private:
 
     Ticker _clocker;
 
-    static MESSAGE_ID _message_id;
-
     static void _telnetConnected();
     static void _telnetDisconnected();
-
-    void printEspState();
 
 public:
     SerialWiFiBridgeClass(const SerialWiFiBridgeClass &);
@@ -138,6 +133,8 @@ public:
     ~SerialWiFiBridgeClass() = default;
 
     static void sendClockMessage();
+    static void sendResetMessage();
+    static void printEspState();
     static String processor(const String &var);
     static void onRequest(AsyncWebServerRequest *request);
     static void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
@@ -161,7 +158,7 @@ public:
     virtual void initClock();
     virtual void printClock();
     //loop
-    virtual void messageHandle(MESSAGE_ID msg_id);
+    virtual void messageHandle(ENUM_MESSAGE_ID message_id);
     virtual void consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli);
 
     virtual void handle();

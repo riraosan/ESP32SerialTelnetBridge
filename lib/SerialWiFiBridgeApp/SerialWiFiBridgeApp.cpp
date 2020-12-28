@@ -27,32 +27,32 @@ SOFTWARE.
 #include <esp32-hal-log.h>
 #include "SerialWiFiBridgeApp.h"
 
-MESSAGE_ID SerialWiFiBridgeClass::_message_id = MSG_NOTHING;
-
 /*
     log_e("")：エラー
     log_w("")：警告
     log_i("")：情報
     log_d("")：デバッグ
     log_v("")：verbose?
-    log_n("")：通常
+    log_d("")：通常
 */
+
+static ENUM_MESSAGE_ID msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_NOTHING;
 
 void SerialWiFiBridgeClass::initPort()
 {
-    log_n("Initializing Ports...");
+    log_d("Initializing Ports...");
     //TODO:Initializing Ports
 }
 
 void SerialWiFiBridgeClass::initEEPROM()
 {
-    log_n("Initializing EEPROM...");
+    log_d("Initializing EEPROM...");
     //TODO:Initializing EEPROM
 }
 
 void SerialWiFiBridgeClass::initFS()
 {
-    log_n("Mounting SPIFFS...");
+    log_d("Mounting SPIFFS...");
     if (!SPIFFS.begin())
     {
         log_e("An Error has occurred while mounting SPIFFS");
@@ -65,44 +65,44 @@ void SerialWiFiBridgeClass::initWiFi()
     _wifiManager->setDebugOutput(false);
     _wifiManager->setConfigPortalTimeout(PORTAL_TIMEOUT);
     _wifiManager->setAPCallback([](AsyncWiFiManager *myWiFiManager) {
-        log_n("- No known wifi found");
-        log_n("- Starting AP: ");
-        log_n("%s \n", myWiFiManager->getConfigPortalSSID().c_str());
-        log_n("%s \n", WiFi.softAPIP().toString().c_str());
+        log_d("- No known wifi found");
+        log_d("- Starting AP: ");
+        log_d("%s \n", myWiFiManager->getConfigPortalSSID().c_str());
+        log_d("%s \n", WiFi.softAPIP().toString().c_str());
     });
 
     // enable autoconnect
     if (!(String(AP_PASSWORD).isEmpty() ? _wifiManager->autoConnect(AP_NAME) : _wifiManager->autoConnect(AP_NAME, AP_PASSWORD)))
     {
-        log_n("- Failed to connect and hit timeout");
+        log_d("- Failed to connect and hit timeout");
         ESP.restart();
         delay(1000);
     }
     else
     {
-        log_n("- WiFi: %s", WiFi.SSID().c_str());
-        log_n("-  Mac: %s", WiFi.macAddress().c_str());
-        log_n("-   IP: %s", WiFi.localIP().toString().c_str());
+        log_d("- WiFi: %s", WiFi.SSID().c_str());
+        log_d("-  Mac: %s", WiFi.macAddress().c_str());
+        log_d("-   IP: %s", WiFi.localIP().toString().c_str());
     }
 
-    log_n("- WiFi Started");
+    log_d("- WiFi Started");
 }
 
 void SerialWiFiBridgeClass::_telnetConnected()
 {
-    log_n("- Telnet connection established.");
+    log_d("- Telnet connection established.");
     //TODO LED ON
 }
 
 void SerialWiFiBridgeClass::_telnetDisconnected()
 {
-    log_n("- Telnet connection closed.");
+    log_d("- Telnet connection closed.");
     //TODO LED OFF
 }
 
 void SerialWiFiBridgeClass::initSerial()
 {
-    log_n("- Initializing Serial...");
+    log_d("- Initializing Serial...");
 
     //_Serial0->setDebugOutput(true);
     _Serial1->setDebugOutput(true);
@@ -135,7 +135,7 @@ void SerialWiFiBridgeClass::initSerial()
 void SerialWiFiBridgeClass::initTelnet()
 {
     //TODO to gain buffer size
-    log_n("- Initializing Telnet...");
+    log_d("- Initializing Telnet...");
 
     String welcome0("\nWelcome to ESP32 Serial WiFi Bridge Terminal. \n(Serial0 <-> esp32.local:55550)\n");
     String welcome1("\nWelcome to ESP32 Serial WiFi Bridge Terminal. \n(Serial1 <-> esp32.local:55551)\n");
@@ -159,7 +159,7 @@ void SerialWiFiBridgeClass::initTelnet()
     _telnet1->setCallbackOnConnect(SerialWiFiBridgeClass::_telnetConnected);
     _telnet1->setCallbackOnDisconnect(SerialWiFiBridgeClass::_telnetDisconnected);
     _telnet1->setPort(SERIAL1_TCP_PORT);
-    _telnet1->setBufferSize(6000);
+    _telnet1->setBufferSize(SERIAL1_BUFFER_SIZE);
     //to begin telnet only
     _telnet1->setSerial(nullptr);
     _telnet1->begin(UART_BAUD1);
@@ -168,7 +168,7 @@ void SerialWiFiBridgeClass::initTelnet()
     _telnet2->setCallbackOnConnect(SerialWiFiBridgeClass::_telnetConnected);
     _telnet2->setCallbackOnDisconnect(SerialWiFiBridgeClass::_telnetDisconnected);
     _telnet2->setPort(SERIAL2_TCP_PORT);
-    _telnet2->setBufferSize(6000);
+    _telnet2->setBufferSize(SERIAL2_BUFFER_SIZE);
     //to begin telnet only
     _telnet2->setSerial(nullptr);
     _telnet2->begin(UART_BAUD2);
@@ -192,7 +192,7 @@ void SerialWiFiBridgeClass::commandCalllbackSerial1(cmd *cmdline)
 {
     Command command(cmdline); // Create wrapper object
 
-    log_n("cmmand line = %s", command.toString());
+    log_d("cmmand line = %s", command.toString());
 
     // Get first (and only) Argument
     Argument arg = command.getArgument(0);
@@ -202,11 +202,15 @@ void SerialWiFiBridgeClass::commandCalllbackSerial1(cmd *cmdline)
 
     if (arg.getValue() == "clock")
     {
-        SerialWiFiBridgeClass::_message_id = MSG_COMMAND_CLOCK;
+        sendClockMessage();
     }
     else if (arg.getValue() == "reset")
     {
-        SerialWiFiBridgeClass::_message_id = MSG_COMMAND_RESET;
+        sendResetMessage();
+    }
+    else if (arg.getValue() == "state")
+    {
+        printEspState();
     }
 }
 
@@ -234,15 +238,16 @@ void SerialWiFiBridgeClass::initOTA()
         else
             type = "filesystem";
 
-        log_n("Start updating %s", type.c_str());
+        log_d("Start updating %s", type.c_str());
     });
 
     ArduinoOTA.onEnd([]() {
-        log_n("\nEnd");
+        log_d("End");
     });
 
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        log_n("Progress: %u%%\r", (progress / (total / 100)));
+        log_printf("\033[1F");
+        log_d("Progress: %u%%", (progress / (total / 100)));
     });
 
     ArduinoOTA.onError([](ota_error_t error) {
@@ -271,11 +276,11 @@ void SerialWiFiBridgeClass::initOTA()
 
     ArduinoOTA.setHostname(HOSTNAME);
 
-    log_n("- Hostname: ");
-    log_n("%s.local", ArduinoOTA.getHostname().c_str());
+    log_d("- Hostname: ");
+    log_d("%s.local", ArduinoOTA.getHostname().c_str());
 
     ArduinoOTA.begin();
-    log_n("- OTA Started");
+    log_d("- OTA Started");
 }
 
 void SerialWiFiBridgeClass::onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
@@ -285,26 +290,43 @@ void SerialWiFiBridgeClass::onBody(AsyncWebServerRequest *request, uint8_t *data
 
 void SerialWiFiBridgeClass::initWebServer()
 {
-    log_n("- Initializing Server...");
+    log_d("- Initializing Server...");
     //REST API(POST)
     _server->on(
-        "/", HTTP_POST, [](AsyncWebServerRequest *request) {
-            log_n("[HTTP_POST] /");
+        "/esp/setting", HTTP_POST, [this](AsyncWebServerRequest *request) {
+            log_d("[HTTP_POST] /");
             request->send(200);
         },
         nullptr, onBody);
 
     //REST API(GET)
-    _server->on("/esp/clock", HTTP_GET, [](AsyncWebServerRequest *request) {
-        log_n("/esp/clock");
-        SerialWiFiBridgeClass::_message_id = MSG_COMMAND_CLOCK;
+    _server->on("/esp/clock", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] /esp/clock");
+        sendClockMessage();
+        request->send(200);
+    });
+
+    _server->on("/esp/reset", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] /esp/reset");
+        request->send(200);
+        sendResetMessage();
+    });
+
+    _server->on("/esp/state", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] /esp/state");
+        printEspState();
         request->send(200);
     });
 }
 
 void SerialWiFiBridgeClass::sendClockMessage()
 {
-    SerialWiFiBridgeClass::_message_id = MSG_COMMAND_CLOCK;
+    msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_CLOCK;
+}
+
+void SerialWiFiBridgeClass::sendResetMessage()
+{
+    msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_RESET;
 }
 
 void SerialWiFiBridgeClass::initClock()
@@ -312,15 +334,13 @@ void SerialWiFiBridgeClass::initClock()
     //Get NTP time
     configTzTime("JST-9", "ntp.nict.jp", "ntp.jst.mfeed.ad.jp");
     delay(2000);
-
-    //_clocker.attach(1, SerialWiFiBridgeClass::sendClockMessage);
 }
 
 void SerialWiFiBridgeClass::printEspState()
 {
-    log_n("- WiFi: %s", WiFi.SSID().c_str());
-    log_n("-  Mac: %s", WiFi.macAddress().c_str());
-    log_n("-   IP: %s", WiFi.localIP().toString().c_str());
+    log_d("- WiFi: %s", WiFi.SSID().c_str());
+    log_d("-  Mac: %s", WiFi.macAddress().c_str());
+    log_d("-   IP: %s", WiFi.localIP().toString().c_str());
 }
 
 //for test
@@ -363,21 +383,22 @@ void SerialWiFiBridgeClass::consoleHandle(TelnetSpy *telnet, HardwareSerial *ser
     telnet->handle();
 }
 
-void SerialWiFiBridgeClass::messageHandle(MESSAGE_ID msg_id)
+void SerialWiFiBridgeClass::messageHandle(ENUM_MESSAGE_ID message_id)
 {
-    switch (msg_id)
+    switch (message_id)
     {
-    case MSG_COMMAND_CLOCK:
+    case ENUM_MESSAGE_ID::MSG_COMMAND_CLOCK:
         printClock();
         break;
-    case MSG_COMMAND_RESET:
+    case ENUM_MESSAGE_ID::MSG_COMMAND_RESET:
         ESP.restart();
         delay(2000);
         break;
-    default:;
+    default:
+        ;
     }
 
-    SerialWiFiBridgeClass::_message_id = MSG_NOTHING;
+    msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_NOTHING;
 }
 
 AsyncWebServer *SerialWiFiBridgeClass::getAsyncWebServerPtr()
@@ -407,7 +428,7 @@ void SerialWiFiBridgeClass::handle()
     consoleHandle(_telnet1, _Serial1, &_cli1);
     consoleHandle(_telnet2, _Serial2, &_cli2);
 
-    messageHandle(SerialWiFiBridgeClass::_message_id);
+    messageHandle(msg_id);
 
     yield();
 }

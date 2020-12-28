@@ -24,14 +24,16 @@ SOFTWARE.
 
 #pragma once
 
-#include <Wire.h>
 #ifdef MPL3115A2
+#include <Wire.h>
 #include <Adafruit_MPL3115A2.h>
+#define SEALEVELPRESSURE_HPA 1014.9F //令和元年　平均海面気圧(hPa)
 #endif
 #ifdef BME280
+#include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#define SEALEVELPRESSURE_HPA 1014.9 //令和元年　平均海面気圧(hPa)
+#define SEALEVELPRESSURE_HPA 1014.9F //令和元年　平均海面気圧(hPa)
 #endif
 #include <SerialWiFiBridgeApp.h>
 
@@ -44,8 +46,12 @@ private:
 #endif
 #ifdef BME280
     Adafruit_BME280 *_bme;
+    Adafruit_Sensor *_pressur;
+    Adafruit_Sensor *_temperatur;
+    Adafruit_Sensor *_humidity;
 #endif
     StaticJsonDocument<200> _root;
+    uint32_t _sensor_ID;
 
     MyApplication();
     ~MyApplication();

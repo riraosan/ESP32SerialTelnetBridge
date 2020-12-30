@@ -55,9 +55,6 @@ private:
     const uint16_t PORTAL_TIMEOUT = 180;
     const char *COMMAND_PROMPT = "~ esp$ ";
 
-    //NOTE: The PIN assignment has changed and may not look straigt forward (other PINs are marke as Rx/Tx),
-    //but this assignment allows to flash via USB also with hooked MAX3232 serial drivers.
-    //https://github.com/AlphaLima/ESP32-Serial-Bridge.git
     /*************************  COM Port 0 *******************************/
     const uint32_t UART_BAUD0 = 115200;        // Baudrate UART0
     const uint32_t SERIAL_PARAM0 = SERIAL_8N1; // Data/Parity/Stop UART0
@@ -139,7 +136,7 @@ public:
     static void onRequest(AsyncWebServerRequest *request);
     static void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
     static void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
-    //SimpleCLI
+    //SimpleCLI callback
     static void commandErrorCallbackSerial1(cmd_error *cmdError);
     static void commandErrorCallbackSerial2(cmd_error *cmdError);
     static void commandCalllbackSerial1(cmd *cmdline);
@@ -151,6 +148,7 @@ public:
     virtual void initSerial();
     virtual void initTelnet();
     virtual void initEEPROM();
+    //virtual void initmDNSServer();
     virtual void initWebServer();
     virtual void initConsole();
     virtual void initFS();
@@ -160,7 +158,6 @@ public:
     //loop
     virtual void messageHandle(ENUM_MESSAGE_ID message_id);
     virtual void consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli);
-
     virtual void handle();
 
     AsyncWebServer *getAsyncWebServerPtr();

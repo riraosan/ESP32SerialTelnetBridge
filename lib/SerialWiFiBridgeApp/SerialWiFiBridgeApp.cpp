@@ -24,8 +24,8 @@ SOFTWARE.
 
 #include <ArduinoOTA.h>
 #include <SPIFFS.h>
+#include <SerialWiFiBridgeApp.h>
 #include <esp32-hal-log.h>
-#include "SerialWiFiBridgeApp.h"
 
 /*
     log_e("")：エラー
@@ -40,22 +40,22 @@ static ENUM_MESSAGE_ID msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_NOTHING;
 
 void SerialWiFiBridgeClass::initPort()
 {
-    log_d("Initializing Ports...");
+    log_d("- Initializing Ports...");
     //TODO:Initializing Ports
 }
 
 void SerialWiFiBridgeClass::initEEPROM()
 {
-    log_d("Initializing EEPROM...");
+    log_d("- Initializing EEPROM...");
     //TODO:Initializing EEPROM
 }
 
 void SerialWiFiBridgeClass::initFS()
 {
-    log_d("Mounting SPIFFS...");
+    log_d("- Mounting SPIFFS...");
     if (!SPIFFS.begin())
     {
-        log_e("An Error has occurred while mounting SPIFFS");
+        log_e("- An Error has occurred while mounting SPIFFS");
         return;
     }
 }
@@ -83,9 +83,12 @@ void SerialWiFiBridgeClass::initWiFi()
         log_d("- WiFi: %s", WiFi.SSID().c_str());
         log_d("-  Mac: %s", WiFi.macAddress().c_str());
         log_d("-   IP: %s", WiFi.localIP().toString().c_str());
-    }
 
-    log_d("- WiFi Started");
+        log_d("- address to _dns = 0x%x", _dns);
+        log_d("- address to _server = 0x%x", _server);
+
+        log_d("- WiFi Started");
+    }
 }
 
 void SerialWiFiBridgeClass::_telnetConnected()
@@ -246,8 +249,8 @@ void SerialWiFiBridgeClass::initOTA()
     });
 
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        log_printf("\033[1F");
         log_d("Progress: %u%%", (progress / (total / 100)));
+        log_printf("\033[1F");
     });
 
     ArduinoOTA.onError([](ota_error_t error) {
@@ -276,11 +279,10 @@ void SerialWiFiBridgeClass::initOTA()
 
     ArduinoOTA.setHostname(HOSTNAME);
 
-    log_d("- Hostname: ");
-    log_d("%s.local", ArduinoOTA.getHostname().c_str());
+    log_d("- Hostname: %s", ArduinoOTA.getHostname().c_str());
 
     ArduinoOTA.begin();
-    log_d("- OTA Started");
+    log_d("- OTA Started.");
 }
 
 void SerialWiFiBridgeClass::onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
@@ -290,7 +292,7 @@ void SerialWiFiBridgeClass::onBody(AsyncWebServerRequest *request, uint8_t *data
 
 void SerialWiFiBridgeClass::initWebServer()
 {
-    log_d("- Initializing Server...");
+    log_d("- Initializing HTTP Server...");
     //REST API(POST)
     _server->on(
         "/esp/setting", HTTP_POST, [this](AsyncWebServerRequest *request) {
@@ -317,8 +319,18 @@ void SerialWiFiBridgeClass::initWebServer()
         printEspState();
         request->send(200);
     });
-}
 
+}
+/*
+void SerialWiFiBridgeClass::initmDNSServer()
+{
+    log_d("- Initializing mDNS Server Port:80...");
+
+    MDNS.enableArduino(80, false);
+    
+    log_i("- add mDSN server port at:  ", 80);
+}
+*/
 void SerialWiFiBridgeClass::sendClockMessage()
 {
     msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_CLOCK;
@@ -394,8 +406,7 @@ void SerialWiFiBridgeClass::messageHandle(ENUM_MESSAGE_ID message_id)
         ESP.restart();
         delay(2000);
         break;
-    default:
-        ;
+    default:;
     }
 
     msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_NOTHING;
@@ -409,20 +420,23 @@ AsyncWebServer *SerialWiFiBridgeClass::getAsyncWebServerPtr()
 void SerialWiFiBridgeClass::setup()
 {
     initPort();
-    initConsole();
     initSerial();
     initTelnet();
+    initConsole();
     initEEPROM();
-    SerialWiFiBridgeClass::initWebServer();
     //initFS();
     initWiFi();
-    initOTA();
     initClock();
+    initOTA();
+
+    //initmDNSServer();
+    initWebServer();
 }
 
 void SerialWiFiBridgeClass::handle()
 {
     ArduinoOTA.handle();
+    //_dns->processNextRequest();
 
     //consoleHandle(_telnet0, _Serial0, &_cli0);
     consoleHandle(_telnet1, _Serial1, &_cli1);

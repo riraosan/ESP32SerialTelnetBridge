@@ -321,16 +321,7 @@ void SerialWiFiBridgeClass::initWebServer()
     });
 
 }
-/*
-void SerialWiFiBridgeClass::initmDNSServer()
-{
-    log_d("- Initializing mDNS Server Port:80...");
 
-    MDNS.enableArduino(80, false);
-    
-    log_i("- add mDSN server port at:  ", 80);
-}
-*/
 void SerialWiFiBridgeClass::sendClockMessage()
 {
     msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_CLOCK;

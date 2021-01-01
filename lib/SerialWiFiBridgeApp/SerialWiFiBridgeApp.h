@@ -148,7 +148,6 @@ public:
     virtual void initSerial();
     virtual void initTelnet();
     virtual void initEEPROM();
-    //virtual void initmDNSServer();
     virtual void initWebServer();
     virtual void initConsole();
     virtual void initFS();

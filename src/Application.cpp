@@ -31,7 +31,6 @@ SOFTWARE.
 MyApplication::MyApplication()
 {
     _sensor_ID = 0;
-    //_server = new AsyncWebServer(80);
     _server = getAsyncWebServerPtr();
 #ifdef MPL3115A2
     _baro = new Adafruit_MPL3115A2();
@@ -241,17 +240,16 @@ void MyApplication::setup()
         log_d("SensorID was: 0x%x", _bme->sensorID());
     }
 
+    //There are three modes: Sleep, Forced, and Normal.
+    //Sleep is a mode that does not measure, and is a sleep mode immediately after the power is turned on.
+    //Forced mode is a mode in which measurement is performed only once. When the measurement is performed, it automatically returns to Sleep mode.
+    //Normal mode is a mode for repeated measurement. The interval for repeating the measurement is the total time of the temperature, humidity, and atmospheric pressure measurement time and the standby time.
     _bme->setSampling(Adafruit_BME280::sensor_mode::MODE_FORCED);
     delay(100);
 
     _pressur = _bme->getPressureSensor();
     _temperatur = _bme->getTemperatureSensor();
     _humidity = _bme->getHumiditySensor();
-
-    //getTemperature();
-    //getPressure();
-    //getHumidity();
-    //getAltitude(SEALEVELPRESSURE_HPA);
     _sensor_ID = getSensorID();
 #endif
     initWebServer();

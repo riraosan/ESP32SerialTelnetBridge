@@ -27,13 +27,13 @@ SOFTWARE.
 #ifdef MPL3115A2
 #include <Wire.h>
 #include <Adafruit_MPL3115A2.h>
-#define SEALEVELPRESSURE_HPA 1014.9F //令和元年　平均海面気圧(hPa)
+#define SEALEVELPRESSURE_HPA 1013.25F
 #endif
 #ifdef BME280
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#define SEALEVELPRESSURE_HPA 1014.9F //令和元年　平均海面気圧(hPa)
+#define SEALEVELPRESSURE_HPA 1013.25F
 #endif
 #include <SerialWiFiBridgeApp.h>
 

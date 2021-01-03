@@ -32,32 +32,33 @@ MyApplication::MyApplication()
 {
     _sensor_ID = 0;
     _server = getAsyncWebServerPtr();
-#ifdef MPL3115A2
-    _baro = new Adafruit_MPL3115A2();
-#endif
-#ifdef BME280
+
     _bme = new Adafruit_BME280();
 
     _pressur = _bme->getPressureSensor();
     _temperatur = _bme->getTemperatureSensor();
     _humidity = _bme->getHumiditySensor();
-#endif
 }
 
 MyApplication::~MyApplication()
 {
+    //TODO: something to do...
 }
 
 void MyApplication::initWebServer()
 {
     SerialWiFiBridgeClass::initWebServer();
-    //BME280 API(GET)                                lambda-introducer... I couldn't understand...
+    //https://qiita.com/TakahiRoyte/items/949f4e88caecb02119aa#%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%95%E3%82%A7%E3%83%BC%E3%82%B9%E3%81%AE%E7%B5%B1%E4%B8%80
     _server->on("/esp/sensor/temperatur", HTTP_GET, [this](AsyncWebServerRequest *request) {
         log_d("/esp/sensor/temperatur");
         String response;
 
-        _root["id"] = _sensor_ID;
-        _root["temperatur"] = getTemperature();
+        if (_bme->takeForcedMeasurement())
+        {
+            _root["id"] = _sensor_ID;
+            _root["temperatur"] = getTemperature();
+        }
+
         serializeJson(_root, response);
 
         request->send(200, "application/json", response);
@@ -67,8 +68,11 @@ void MyApplication::initWebServer()
         log_d("/esp/sensor/pressur");
         String response;
 
-        _root["id"] = _sensor_ID;
-        _root["pressur"] = getPressure();
+        if (_bme->takeForcedMeasurement())
+        {
+            _root["id"] = _sensor_ID;
+            _root["pressur"] = getPressure();
+        }
         serializeJson(_root, response);
 
         request->send(200, "application/json", response);
@@ -78,8 +82,11 @@ void MyApplication::initWebServer()
         log_d("/esp/sensor/humidity");
         String response;
 
-        _root["id"] = _sensor_ID;
-        _root["humidity"] = getHumidity();
+        if (_bme->takeForcedMeasurement())
+        {
+            _root["id"] = _sensor_ID;
+            _root["humidity"] = getHumidity();
+        }
         serializeJson(_root, response);
 
         request->send(200, "application/json", response);
@@ -89,8 +96,12 @@ void MyApplication::initWebServer()
         log_d("/esp/sensor/altitude");
         String response;
 
-        _root["id"] = _sensor_ID;
-        _root["altitude"] = getAltitude(SEALEVELPRESSURE_HPA);
+        if (_bme->takeForcedMeasurement())
+        {
+            _root["id"] = _sensor_ID;
+            _root["altitude"] = getAltitude(SEALEVELPRESSURE_HPA);
+        }
+
         serializeJson(_root, response);
 
         request->send(200, "application/json", response);
@@ -100,11 +111,14 @@ void MyApplication::initWebServer()
         log_d("/esp/sensor/all");
         String response;
 
-        _root["id"] = _sensor_ID;
-        _root["temperatur"] = getTemperature();
-        _root["pressur"] = getPressure();
-        _root["humidity"] = getHumidity();
-        _root["altitude"] = getAltitude(SEALEVELPRESSURE_HPA);
+        if (_bme->takeForcedMeasurement())
+        {
+            _root["id"] = _sensor_ID;
+            _root["temperatur"] = getTemperature();
+            _root["pressur"] = getPressure();
+            _root["humidity"] = getHumidity();
+        }
+
         serializeJson(_root, response);
 
         request->send(200, "application/json", response);
@@ -119,80 +133,36 @@ void MyApplication::initWebServer()
     log_d("Server Started");
 }
 
-#ifdef MPL3115A2
-float MyApplication::getPressure()
-{
-    float pascals = _baro->getPressure();
-    log_d("%4.1f (hPa)", pascals * 0.01);
-
-    return pascals * 0.01;
-}
-
-float MyApplication::getTemperature()
-{
-    float tempC = _baro->getTemperature();
-    log_d("%2.1f *C", tempC);
-
-    return tempC;
-}
-
-void MyApplication::setSeaPressure(float hPascal)
-{
-    _baro->setSeaPressure(hPascal * 100);
-}
-#endif
-
-#ifdef BME280
 float MyApplication::getTemperature(void)
 {
-    if (_bme->takeForcedMeasurement())
-    {
-        float value = _bme->readTemperature();
-        log_d("Temperature = %2.1f*C", value);
+    float value = _bme->readTemperature();
+    log_d("Temperature = %2.1f*C", value);
 
-        return value;
-    }
-
-    return -1;
+    return value;
 }
 
 float MyApplication::getPressure(void)
 {
-    if (_bme->takeForcedMeasurement())
-    {
-        float pascals = _bme->readPressure();
-        log_d("Pressure = %4.1f (hPa)", pascals / 100.0F);
+    float pascals = _bme->readPressure();
+    log_d("Pressure = %4.1f (hPa)", pascals / 100.0f);
 
-        return pascals / 100.0F;
-    }
-
-    return -1;
+    return pascals / 100.0f;
 }
 
 float MyApplication::getHumidity(void)
 {
-    if (_bme->takeForcedMeasurement())
-    {
-        float humidity = _bme->readHumidity();
-        log_d("Humidity = %2.1f %", humidity);
+    float humidity = _bme->readHumidity();
+    log_d("Humidity = %2.1f %", humidity);
 
-        return humidity;
-    }
-
-    return -1;
+    return humidity;
 }
 
 float MyApplication::getAltitude(float seaLevel)
 {
-    if (_bme->takeForcedMeasurement())
-    {
-        float altitude = _bme->readAltitude(SEALEVELPRESSURE_HPA);
-        log_d("Altitude = %4.1f m", altitude);
+    float altitude = _bme->readAltitude(SEALEVELPRESSURE_HPA);
+    log_d("Altitude = %4.1f m", altitude);
 
-        return altitude;
-    }
-
-    return -1;
+    return altitude;
 }
 
 uint32_t MyApplication::getSensorID(void)
@@ -202,35 +172,17 @@ uint32_t MyApplication::getSensorID(void)
 
     return id;
 }
-#endif
 
-void MyApplication::setup()
+void MyApplication::initBME280()
 {
-    SerialWiFiBridgeClass::setup();
-#ifdef MPL3115A2
-    if (!_baro->begin())
-    {
-        log_d("ESP32 couldn't find sensor.");
-        return;
-    }
-    else
-    {
-        log_d("ESP32 could find sensor.");
-    }
-
-    setSeaPressure(SEALEVELPRESSURE_HPA);
-    getPressure();
-    getTemperature();
-#endif
-#ifdef BME280
     if (!_bme->begin(BME280_ADDRESS_ALTERNATE))
     {
-        log_d("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
-        log_d("SensorID was: 0x%x", _bme->sensorID());
-        log_d("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
-        log_d("   ID of 0x56-0x58 represents a BMP 280,\n");
-        log_d("        ID of 0x60 represents a BME 280.\n");
-        log_d("        ID of 0x61 represents a BME 680.\n");
+        log_e("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
+        log_e("SensorID was: 0x%x", _bme->sensorID());
+        log_e("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
+        log_e("   ID of 0x56-0x58 represents a BMP 280,\n");
+        log_e("        ID of 0x60 represents a BME 280.\n");
+        log_e("        ID of 0x61 represents a BME 680.\n");
         while (1)
             delay(10);
     }
@@ -238,19 +190,34 @@ void MyApplication::setup()
     {
         log_d("ESP could find a BME280 sensor!");
         log_d("SensorID was: 0x%x", _bme->sensorID());
+
+        // humidity sensing
+        // See Also. https://github.com/adafruit/Adafruit_BME280_Library/blob/master/examples/advancedsettings/advancedsettings.ino
+        log_i("-- Humidity Sensing Scenario --");
+        log_i("forced mode, 1x temperature / 1x humidity / 0x pressure oversampling");
+        log_i("= pressure off, filter off");
+        _bme->setSampling(Adafruit_BME280::sensor_mode::MODE_FORCED,
+                          Adafruit_BME280::sensor_sampling::SAMPLING_X2,   // temperature
+                          Adafruit_BME280::sensor_sampling::SAMPLING_NONE, // pressure
+                          Adafruit_BME280::sensor_sampling::SAMPLING_X4,   // humidity
+                          Adafruit_BME280::sensor_filter::FILTER_OFF);
+
+        if (_bme->takeForcedMeasurement())
+        {
+            _sensor_ID = getSensorID();
+            getTemperature();
+            getPressure();
+            getHumidity();
+        }
+
+        // suggested rate is 1Hz (1s)
+        delay(1000);
     }
+}
 
-    //There are three modes: Sleep, Forced, and Normal.
-    //Sleep is a mode that does not measure, and is a sleep mode immediately after the power is turned on.
-    //Forced mode is a mode in which measurement is performed only once. When the measurement is performed, it automatically returns to Sleep mode.
-    //Normal mode is a mode for repeated measurement. The interval for repeating the measurement is the total time of the temperature, humidity, and atmospheric pressure measurement time and the standby time.
-    _bme->setSampling(Adafruit_BME280::sensor_mode::MODE_FORCED);
-    delay(100);
-
-    _pressur = _bme->getPressureSensor();
-    _temperatur = _bme->getTemperatureSensor();
-    _humidity = _bme->getHumiditySensor();
-    _sensor_ID = getSensorID();
-#endif
+void MyApplication::setup()
+{
+    SerialWiFiBridgeClass::setup();
+    initBME280();
     initWebServer();
 }

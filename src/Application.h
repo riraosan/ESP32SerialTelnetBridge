@@ -24,34 +24,25 @@ SOFTWARE.
 
 #pragma once
 
-#ifdef MPL3115A2
-#include <Wire.h>
-#include <Adafruit_MPL3115A2.h>
-#define SEALEVELPRESSURE_HPA 1013.25F
-#endif
-#ifdef BME280
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#define SEALEVELPRESSURE_HPA 1013.25F
-#endif
 #include <SerialWiFiBridgeApp.h>
+
+#define SEALEVELPRESSURE_HPA 1013.25f
 
 class MyApplication : public SerialWiFiBridgeClass
 {
 private:
     AsyncWebServer *_server;
-#ifdef MPL3115A2
-    Adafruit_MPL3115A2 *_mpl;
-#endif
-#ifdef BME280
+
     Adafruit_BME280 *_bme;
     Adafruit_Sensor *_pressur;
     Adafruit_Sensor *_temperatur;
     Adafruit_Sensor *_humidity;
-#endif
-    StaticJsonDocument<200> _root;
     uint32_t _sensor_ID;
+
+    StaticJsonDocument<200> _root;
 
     MyApplication();
     ~MyApplication();
@@ -65,20 +56,14 @@ public:
         static MyApplication instance;
         return instance;
     }
-
+    void initBME280();
     void initWebServer();
     void setup();
     //void handle();
-#ifdef MPL3115A2
-    float getPressure();
-    float getTemperature();
-    void setSeaPressure(float pascal);
-#endif
-#ifdef BME280
+
     float getTemperature(void);
     float getPressure(void);
     float getHumidity(void);
     float getAltitude(float seaLevel);
     uint32_t getSensorID(void);
-#endif
 };

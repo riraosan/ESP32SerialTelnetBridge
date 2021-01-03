@@ -1,4 +1,4 @@
-# ESP32 Serial WiFi Bridge(step1)
+# ESP32 Serial WiFi Bridge(step2)
 
 ## ✅ Features
 
@@ -8,8 +8,9 @@
 - [ ] 接続時に接続したIPアドレスを表示する。
 - [ ] 初期化ボタンで、WiFiのログイン情報を消去する。
 - [ ] 切り替えボタンでAPモード、STAモードを切り替える。
-- [ ] REST APIにアクセスして、リレーをON／OFFする。
-- [ ] REST APIにアクセスして、PWM波をポートに出力する。（サーボ駆動用）
+- [ ] REST APIにPUTリクエストを送信して、リレーをON／OFFする。
+- [ ] REST APIにPUTリクエストを送信して、PWM波をポートに出力する。（サーボ駆動用）
+- [x] REST APIにGETリクエストを送信して、BME280センサーの情報を取得する。
 - [ ] デバイスの状態をステータスLEDで表示する。
 - [ ] コマンドより通信状態を確認する。
 - [ ] リセットボタンでデバイスをハードウェアリセットする。
@@ -23,7 +24,7 @@
 - サーボ
 
 ## ✅ 簡単な回路図
-
+（仮）
 ![回路図](https://www.quadcept.com/ja/manual/common/images/20200904104154565-e8.png)
 
 ## ✅ 部品一覧
@@ -33,7 +34,7 @@
 - リレーモジュール
 - センサー類
 
-### Wemoslolin32 board)
+### Wemos　lolin32 board)
 
 Wemos Lolin32 Pinout
 ![lolin32](http://blog.pagefault-limited.co.uk/wp-content/uploads/2019/04/lolon32_v1.0.1_pinout.png)
@@ -43,11 +44,13 @@ Wemos Lolin32 Pinout
 
 - [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer.git)
 - [ESPAsyncWiFiManager](https://github.com/alanswx/ESPAsyncWiFiManager.git)
-- [telnetspy](https://github.com/yasheena/telnetspy.git)
+- [Telnetspy](https://github.com/yasheena/telnetspy.git)
 - [ArduinoJson](https://github.com/bblanchon/ArduinoJson.git)
 - [ServoESP32](https://github.com/RoboticsBrno/ServoESP32.git)
-- [ArduinoStreamUtils](https://github.com/bblanchon/ArduinoStreamUtils.git)
 - [SimpleCLI](https://github.com/spacehuhn/SimpleCLI.git)
+<!--
+[ArduinoStreamUtils](https://github.com/bblanchon/ArduinoStreamUtils.git)
+-->
 
 ## 使用例
 
@@ -63,15 +66,18 @@ Wemos Lolin32 Pinout
 $ git clone https://github.com/riraosan/ESP32SerialWiFiBridge.git
 ```
 
-TODO　インクルードする
+TODO:　インクルードする
 
-TODO　インスタンスを作成
+TODO:　ESP32SerialTelnetBridgeクラスを派生元にしてアプリケーションクラスを作成する。
 
-TODO クラスヘッダ表示
+TODO:　インスタンスを作成
+
+TODO: クラスヘッダ表示
 
 ## 👤 Author
 
 - Github: [riraosan](https://github.com/riraosan)
+- Qiita: []
 
 ## 📝 License
 

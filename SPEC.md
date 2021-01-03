@@ -34,15 +34,16 @@ DELETE：データを削除します。
 
 <!-- code_chunk_output -->
 
-- [要求仕様一覧](#要求仕様一覧)
-  - [[swb-1]Telnet端末からコマンドを実行する](#swb-1telnet端末からコマンドを実行する)
-  - [[swb-2]REST APIでポートの制御をする](#swb-2rest-apiでポートの制御をする)
-  - [[swb-3]ESP32の状態をコマンドで表示する](#swb-3esp32の状態をコマンドで表示する)
-  - [[swb-4]初期化ボタンを押下するとSSID、パスワード情報を消去する](#swb-4初期化ボタンを押下するとssid-パスワード情報を消去する)
-  - [[swb-5]現在のESP32の状態をLEDで表示する](#swb-5現在のesp32の状態をledで表示する)
-  - [[swb-6]リセットボタンでESP32をリセットする](#swb-6リセットボタンでesp32をリセットする)
-  - [[swb-7]REST APIでBME280センサーのデータを取得する](#swb-7rest-apiでbme280センサーのデータを取得する)
-  - [[swb-8]コマンド入力によりUART0の出力先をTelnet1またはTelnet2へ変更する](#swb-8コマンド入力によりuart0の出力先をtelnet1またはtelnet2へ変更する)
+- [ESP32 UART-Telnetブリッジ 要求仕様書　{ignore=true}](#esp32-uart-telnetブリッジ-要求仕様書ignoretrue)
+  - [目次 {ignore=true}](#目次-ignoretrue)
+    - [[swb-1]Telnet端末からコマンドを実行する](#swb-1telnet端末からコマンドを実行する)
+    - [[swb-2]REST APIでポートの制御をする](#swb-2rest-apiでポートの制御をする)
+    - [[swb-3]ESP32の状態をコマンドで表示する](#swb-3esp32の状態をコマンドで表示する)
+    - [[swb-4]初期化ボタンを押下するとSSID、パスワード情報を消去する](#swb-4初期化ボタンを押下するとssidパスワード情報を消去する)
+    - [[swb-5]現在のESP32の状態をLEDで表示する](#swb-5現在のesp32の状態をledで表示する)
+    - [[swb-6]リセットボタンでESP32をリセットする](#swb-6リセットボタンでesp32をリセットする)
+    - [[swb-7]REST APIでBME280センサーのデータを取得する](#swb-7rest-apiでbme280センサーのデータを取得する)
+    - [[swb-8]コマンド入力によりUART0の出力先をTelnet1またはTelnet2へ変更する](#swb-8コマンド入力によりuart0の出力先をtelnet1またはtelnet2へ変更する)
 
 <!-- /code_chunk_output -->
 
@@ -119,7 +120,7 @@ DELETE：データを削除します。
 * [x] [swb-7-5]気圧の取得URI「GET /esp/sensor/pressure」とする。
 * [x] [swb-7-6]すべての情報取得URI「GET /esp/sensor/all」とする。
 * [x] [swb-7-7]JSONフォーマットは以下のフォーマットとする。GETリクエストを受信するとjson形式のBodyをレスポンスで応答する。
-  * [x] JSONレスポンスフォーマットは次のように定める：
+  * [ ] JSONレスポンスフォーマットは次のように定める：
     * [ ] 温度の取得
       * [ ] {"id": xx, "devices": "BME280", data: {"temparature": xx.xx}}
     * [ ] 湿度の取得

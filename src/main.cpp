@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "Application.h"
+#include <Application.h>
 
 static MyApplication &theApp = MyApplication::getInstance();
 

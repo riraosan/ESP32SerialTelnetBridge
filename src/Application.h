@@ -24,12 +24,11 @@ SOFTWARE.
 
 #pragma once
 
+#include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 #include <SerialWiFiBridgeApp.h>
-
-#define SEALEVELPRESSURE_HPA 1013.25f
 
 class MyApplication : public SerialWiFiBridgeClass
 {
@@ -43,6 +42,7 @@ private:
     uint32_t _sensor_ID;
 
     StaticJsonDocument<200> _root;
+    Ticker _sensorChecker;
 
     MyApplication();
     ~MyApplication();
@@ -56,10 +56,13 @@ public:
         static MyApplication instance;
         return instance;
     }
-    void initBME280();
+    static void sendSensorInfo();
+    void initBME280HumiditySensing();
+    void initBME280WeatherStation();
+    void initUnifiedBME280();
     void initWebServer();
     void setup();
-    //void handle();
+    void handle();
 
     float getTemperature(void);
     float getPressure(void);

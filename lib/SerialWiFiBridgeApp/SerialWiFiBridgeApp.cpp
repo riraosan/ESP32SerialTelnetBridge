@@ -319,7 +319,6 @@ void SerialWiFiBridgeClass::initWebServer()
         printEspState();
         request->send(200);
     });
-
 }
 
 void SerialWiFiBridgeClass::sendClockMessage()
@@ -419,21 +418,16 @@ void SerialWiFiBridgeClass::setup()
     initWiFi();
     initClock();
     initOTA();
-
-    //initmDNSServer();
     initWebServer();
 }
 
 void SerialWiFiBridgeClass::handle()
 {
     ArduinoOTA.handle();
-    //_dns->processNextRequest();
-
+    //TODO: enable serial0
     //consoleHandle(_telnet0, _Serial0, &_cli0);
     consoleHandle(_telnet1, _Serial1, &_cli1);
     consoleHandle(_telnet2, _Serial2, &_cli2);
-
-    messageHandle(msg_id);
 
     yield();
 }

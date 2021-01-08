@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "Application.h"
+#include <Application.h>
 #include <esp32-hal-log.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
@@ -35,6 +35,7 @@ MyApplication::MyApplication()
 
     _bme = new Adafruit_BME280();
 
+    //how to take Sensor Events instead of direct readings
     _pressur = _bme->getPressureSensor();
     _temperatur = _bme->getTemperatureSensor();
     _humidity = _bme->getHumiditySensor();
@@ -173,8 +174,49 @@ uint32_t MyApplication::getSensorID(void)
     return id;
 }
 
-void MyApplication::initBME280()
+// See Also. https://github.com/adafruit/Adafruit_BME280_Library/blob/master/examples/advancedsettings/advancedsettings.ino
+// weather monitoring
+void MyApplication::initBME280WeatherStation()
 {
+    log_i("-- Weather Station Scenario --");
+    log_i("forced mode, 1x temperature / 1x humidity / 1x pressure oversampling,");
+    log_i("filter off");
+    _bme->setSampling(Adafruit_BME280::MODE_FORCED,
+                      Adafruit_BME280::SAMPLING_X1, // temperature
+                      Adafruit_BME280::SAMPLING_X1, // pressure
+                      Adafruit_BME280::SAMPLING_X1, // humidity
+                      Adafruit_BME280::FILTER_OFF);
+
+    // suggested rate is 1/60Hz (1m)
+}
+
+// humidity sensing
+void MyApplication::initBME280HumiditySensing()
+{
+    log_i("-- Humidity Sensing Scenario --");
+    log_i("forced mode, 2x temperature / 4x humidity / 0x pressure oversampling");
+    log_i("= pressure off, filter off");
+    _bme->setSampling(Adafruit_BME280::MODE_FORCED,
+                      Adafruit_BME280::SAMPLING_X2,   // temperature
+                      Adafruit_BME280::SAMPLING_NONE, // pressure
+                      Adafruit_BME280::SAMPLING_X4,   // humidity
+                      Adafruit_BME280::FILTER_OFF);
+
+    if (_bme->takeForcedMeasurement())
+    {
+        _sensor_ID = getSensorID();
+        getTemperature();
+        getPressure();
+        getHumidity();
+    }
+
+    // suggested rate is 1Hz (1s)
+}
+
+void MyApplication::setup()
+{
+    SerialWiFiBridgeClass::setup();
+
     if (!_bme->begin(BME280_ADDRESS_ALTERNATE))
     {
         log_e("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
@@ -190,34 +232,21 @@ void MyApplication::initBME280()
     {
         log_d("ESP could find a BME280 sensor!");
         log_d("SensorID was: 0x%x", _bme->sensorID());
-
-        // humidity sensing
-        // See Also. https://github.com/adafruit/Adafruit_BME280_Library/blob/master/examples/advancedsettings/advancedsettings.ino
-        log_i("-- Humidity Sensing Scenario --");
-        log_i("forced mode, 1x temperature / 1x humidity / 0x pressure oversampling");
-        log_i("= pressure off, filter off");
-        _bme->setSampling(Adafruit_BME280::sensor_mode::MODE_FORCED,
-                          Adafruit_BME280::sensor_sampling::SAMPLING_X2,   // temperature
-                          Adafruit_BME280::sensor_sampling::SAMPLING_NONE, // pressure
-                          Adafruit_BME280::sensor_sampling::SAMPLING_X4,   // humidity
-                          Adafruit_BME280::sensor_filter::FILTER_OFF);
-
-        if (_bme->takeForcedMeasurement())
-        {
-            _sensor_ID = getSensorID();
-            getTemperature();
-            getPressure();
-            getHumidity();
-        }
-
-        // suggested rate is 1Hz (1s)
-        delay(1000);
+#ifdef WEATER_STATION_SENARIO
+        initBME280WeatherStation();
+#endif
+#ifdef HUMIDITY_SENSING_SENARIO
+        initBME280HumiditySensing();
+#endif
     }
+    initWebServer();
 }
 
-void MyApplication::setup()
+void MyApplication::handle()
 {
-    SerialWiFiBridgeClass::setup();
-    initBME280();
-    initWebServer();
+    SerialWiFiBridgeClass::handle();
+    switch()
+    {
+        
+    }
 }

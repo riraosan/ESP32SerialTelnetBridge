@@ -155,7 +155,7 @@ public:
     virtual void initClock();
     virtual void printClock();
     //loop
-    virtual void messageHandle(ENUM_MESSAGE_ID message_id);
+    //virtual void messageHandle(ENUM_MESSAGE_ID message_id);
     virtual void consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli);
     virtual void handle();
 

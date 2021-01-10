@@ -141,3 +141,62 @@ DELETE：データを削除します。
 * [ ] [swb-8-0] 要求機能をさらに具体的書く。何をどうやってどのような機能をどのような順序で行うのかを書く。５W1Hで書く。
 * [ ] [swb]
 
+//HAL(JSON Hypertext Application Language)
+//https://tools.ietf.org/html/draft-kelly-json-hal-08
+//POST リクエスト
+//esp32.local デバイスが　esp32_clock.local デバイスへ温度、湿度、気圧情報をPOSTリクエストで送る。
+{
+    "device_id": 12345678, //MACアドレスをキーにしてデバイスIDを送信する
+    "created_at": "2021-01-10 12:01:16",
+    "_links": { //エンベロープ？
+        "self": {
+            "href": "http://esp32.local"
+        },
+        "next": {
+            "href": ""
+        }
+    },
+    "_embedded": {
+        "sensor": {
+            "id": 93, //センサーID
+            "name": "BME280",
+            "temperature": 15.41,
+            "humidity": 72.4638671875,
+            "pressure": 1021.46828125,
+            "status": "processing"
+        },
+        "servo": {
+            "1": {
+                "id": null,
+                "first_angle": 0, //degree
+                "second_angle": 90, //degree
+                "duration": 1000 //ms
+            },
+            "2": {
+                "id": null,
+                "first_angle": 0, //degree
+                "second_angle": 90, //degree
+                "duration": 1000 //ms
+            }
+        },
+        "relay": {}
+    }
+}
+//esp32からesp32_clockへデータを送信する
+//bme280 POST
+//esp32_clcok.localに実装する。
+"href": "/sensor/V1/all"
+"href": "/sensor/V1/temperature"
+"href": "/sensor/V1/humidity"
+"href": "/sensor/V1/pressure"
+//esp32のサーボの角度を変更する
+//Servo PUT
+"href": "/servo/V1/1/operation"
+"href": "/servo/V1/2/operation"
+//Servo GET
+"href": "/servo/V1/1/status"
+"href": "/servo/V1/2/status"
+
+//Relay PUT
+"href": "/relay/V1/1/operation"
+"href": "/relay/V1/2/operation"

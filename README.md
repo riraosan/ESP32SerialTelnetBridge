@@ -1,16 +1,16 @@
-# ESP32 Serial WiFi Bridge(step2) {ignore=true}
+# ESP32 Seria Telnet Bridge (Prot Setp2)
 
 ## Contents
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
 <!-- code_chunk_output -->
 
-- [ESP32 Serial WiFi Bridge(step2) {ignore=true}](#esp32-serial-wifi-bridgestep2-ignoretrue)
+- [ESP32 Seria Telnet Bridge (Prot Setp2)](#esp32-seria-telnet-bridge-prot-setp2)
   - [Contents](#contents)
   - [✅ Features](#-features)
   - [✅ 開発環境](#-開発環境)
-  - [✅ 簡単な回路図](#-簡単な回路図)
-    - [Wemos lolin32 board Pinout](#wemos-lolin32-board-pinout)
+  - [✅ 回路図](#-回路図)
+  - [✅ Wemos lolin32 board Pinout](#-wemos-lolin32-board-pinout)
   - [✅ Using ESP32 libraries](#-using-esp32-libraries)
   - [🚀 How to use](#-how-to-use)
   - [👤 Author](#-author)
@@ -50,11 +50,11 @@
 - [Sensors(BME280)]()
 - [USB-Serial Bridge]()
 
-## ✅ 簡単な回路図
+## ✅ 回路図
 （仮）
 ![回路図](https://www.quadcept.com/ja/manual/common/images/20200904104154565-e8.png)
 
-### Wemos lolin32 board Pinout
+## ✅ Wemos lolin32 board Pinout
 
 ![Wemos lolin32 board Pinout](http://blog.pagefault-limited.co.uk/wp-content/uploads/2019/04/lolon32_v1.0.1_pinout.png)
 

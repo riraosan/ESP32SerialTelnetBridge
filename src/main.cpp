@@ -24,7 +24,7 @@ SOFTWARE.
 
 #include <Application.h>
 
-static MyApplication &theApp = MyApplication::getInstance();
+static Application &theApp = Application::getInstance();
 
 void setup()
 {

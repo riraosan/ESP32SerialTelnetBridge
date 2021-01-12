@@ -24,6 +24,7 @@ SOFTWARE.
 
 #pragma once
 
+#include <SPIFFS.h>
 #include <ArduinoOTA.h>
 #include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
@@ -40,19 +41,18 @@ SOFTWARE.
 class SerialTelnetBridgeClass
 {
 private:
-    String _HOSTNAME("esp32");
-    String _TARGET_HOSTNAME("esp32_clock");
-    Sstring _AP_PASSWORD("");
+    String _HOSTNAME;
+    String _TARGET_HOSTNAME;
+    String _AP_PASSWORD;
 
-    String _welcome0("\nWelcome to ESP32 Serial WiFi Bridge Terminal. \n(Serial0 <-> esp32.local:55550)\n");
-    String _welcome1("\nWelcome to ESP32 Serial WiFi Bridge Terminal. \n(Serial1 <-> esp32.local:55551)\n");
-    String _welcome2("\nWelcome to ESP32 Serial WiFi Bridge Terminal. \n(Serial2 <-> esp32.local:55552)\n");
-
-    const char *_AP_NAME = "ESP32-G-AP";
+    String _welcome0;
+    String _welcome1;
+    String _welcome2;
+    String _COMMAND_PROMPT;
+    String _AP_NAME;
 
     const uint32_t _MONITOR_SPEED = 115200;
     const uint16_t _PORTAL_TIMEOUT = 180;
-    const char *_COMMAND_PROMPT = "~ esp$ ";
 
     /*************************  COM Port 0 *******************************/
     const uint32_t UART_BAUD0 = 115200;        // Baudrate UART0
@@ -60,7 +60,7 @@ private:
     const uint8_t SERIAL0_RXPIN = 3;           // receive Pin UART0
     const uint8_t SERIAL0_TXPIN = 1;           // transmit Pin UART0
     const uint16_t SERIAL0_TCP_PORT = 55550;   // Telnet Port UART0
-    const size_t SERIAL1_BUFFER_SIZE = 1024;   // RX Buffer Size UART0
+    const size_t SERIAL0_BUFFER_SIZE = 1024;   // RX Buffer Size UART0
     /*************************  COM Port 1 *******************************/
     const uint32_t UART_BAUD1 = 115200;        // Baudrate UART1
     const uint32_t SERIAL_PARAM1 = SERIAL_8N1; // Data/Parity/Stop UART1
@@ -105,6 +105,12 @@ public:
         _Serial0 = new HardwareSerial(0);
         _Serial1 = new HardwareSerial(1);
         _Serial2 = new HardwareSerial(2);
+
+        _HOSTNAME = "esp32_001";
+        _TARGET_HOSTNAME = "esp32_gw";
+        _AP_PASSWORD = "1234";
+        _COMMAND_PROMPT = "~esp$ ";
+        _AP_NAME = "ESP-G-AP";
     }
 
     ~SerialTelnetBridgeClass() = default;
@@ -125,19 +131,22 @@ public:
     static void telnet2Disconnected();
 
     static void printEspState();
-    //setup
-    virtual void setup();
+
+    virtual bool begin();
     virtual void initWiFi();
     virtual void initOTA();
     virtual void initSerial();
     virtual void initTelnet();
-    virtual void initEEPROM();
     virtual void initConsole();
-    virtual void initFS();
-    virtual void initPort();
     virtual void initClock();
     virtual void printClock();
-    //loop
+
+    void setHostname(String hostname);
+    void setApPassword(String password);
+    void setTargetHostname(String targetHostname);
+    void setCommandPrompt(String prompt);
+
+    //Message loop
     virtual void consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli);
     virtual void handle();
 

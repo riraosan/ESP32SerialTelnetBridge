@@ -23,7 +23,6 @@ SOFTWARE.
 */
 
 #include <ArduinoOTA.h>
-#include <SPIFFS.h>
 #include <SerialWiFiBridgeApp.h>
 #include <esp32-hal-log.h>
 
@@ -36,84 +35,95 @@ SOFTWARE.
     log_d("")：通常
 */
 
-//static ENUM_MESSAGE_ID msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_NOTHING;
-
-void SerialTelnetBridgeClass::initPort()
-{
-    log_d("- Initializing Ports...");
-    //TODO:Initializing Ports
-}
-
-void SerialTelnetBridgeClass::initEEPROM()
-{
-    log_d("- Initializing EEPROM...");
-    //TODO:Initializing EEPROM
-}
-
-void SerialTelnetBridgeClass::initFS()
-{
-    log_d("- Mounting SPIFFS...");
-    if (!SPIFFS.begin())
-    {
-        log_e("- An Error has occurred while mounting SPIFFS");
-        return;
-    }
-}
-
 void SerialTelnetBridgeClass::initWiFi()
 {
+    log_d("- Initializing Connecting to WiFi AP...");
+
     _wifiManager->setDebugOutput(false);
-    _wifiManager->setConfigPortalTimeout(PORTAL_TIMEOUT);
+    _wifiManager->setConfigPortalTimeout(_PORTAL_TIMEOUT);
+
     _wifiManager->setAPCallback([](AsyncWiFiManager *myWiFiManager) {
-        log_d("- No known wifi found");
+        log_d("- No known WiFi found");
         log_d("- Starting AP: ");
-        log_d("%s \n", myWiFiManager->getConfigPortalSSID().c_str());
-        log_d("%s \n", WiFi.softAPIP().toString().c_str());
+        log_d("%s", myWiFiManager->getConfigPortalSSID().c_str());
+        log_d("%s", WiFi.softAPIP().toString().c_str());
     });
 
-    // enable autoconnect
-    if (!(String(AP_PASSWORD).isEmpty() ? _wifiManager->autoConnect(AP_NAME) : _wifiManager->autoConnect(AP_NAME, AP_PASSWORD)))
+    if (_AP_PASSWORD.isEmpty())
     {
-        log_d("- Failed to connect and hit timeout");
-        ESP.restart();
-        delay(1000);
+        if (!_wifiManager->autoConnect(_AP_NAME.c_str()))
+        {
+            log_e("- Failed to connect and hit timeout");
+            ESP.restart();
+            delay(1000);
+        }
     }
     else
     {
-        log_d("- WiFi: %s", WiFi.SSID().c_str());
-        log_d("-  Mac: %s", WiFi.macAddress().c_str());
-        log_d("-   IP: %s", WiFi.localIP().toString().c_str());
-
-        log_d("- address to _dns = 0x%x", _dns);
-        log_d("- address to _server = 0x%x", _server);
-
-        log_d("- WiFi Started");
+        if (!_wifiManager->autoConnect(_AP_NAME.c_str(), _AP_PASSWORD.c_str()))
+        {
+            log_e("- Failed to connect and hit timeout");
+            ESP.restart();
+            delay(1000);
+        }
     }
+
+    log_d("- Success to connect AP!!");
+    log_d("- address to _dns = 0x%x", _dns);
+    log_d("- address to _server = 0x%x", _server);
+
+    printEspState();
+
+    log_i("- WiFi Started.");
 }
 
-void SerialTelnetBridgeClass::_telnetConnected()
+void SerialTelnetBridgeClass::telnet0Connected()
 {
-    log_d("- Telnet connection established.");
-    //TODO LED ON
+    log_d("- Telnet0 connection established.");
+    //TODO LED0 ON
 }
 
-void SerialTelnetBridgeClass::_telnetDisconnected()
+void SerialTelnetBridgeClass::telnet0Disconnected()
 {
-    log_d("- Telnet connection closed.");
-    //TODO LED OFF
+    log_d("- Telnet0 connection closed.");
+    //TODO LED0 OFF
+}
+
+void SerialTelnetBridgeClass::telnet1Connected()
+{
+    log_d("- Telnet1 connection established.");
+    //TODO LED1 ON
+}
+
+void SerialTelnetBridgeClass::telnet1Disconnected()
+{
+    log_d("- Telnet1 connection closed.");
+    //TODO LED1 OFF
+}
+
+void SerialTelnetBridgeClass::telnet2Connected()
+{
+    log_d("- Telnet2 connection established.");
+    //TODO LED2 ON
+}
+
+void SerialTelnetBridgeClass::telnet2Disconnected()
+{
+    log_d("- Telnet2 connection closed.");
+    //TODO LED2 OFF
 }
 
 void SerialTelnetBridgeClass::initSerial()
 {
     log_d("- Initializing Serial...");
 
-    //_Serial0->setDebugOutput(true);
-    _Serial1->setDebugOutput(true);
-    _Serial2->setDebugOutput(true);
+    _Serial0->setDebugOutput(true);
+    //_Serial1->setDebugOutput(true);
+    //_Serial2->setDebugOutput(true);
 
     //set buffer size
-    _Serial0->setRxBufferSize(SERIAL0_BUFFER_SIZE)
-        _Serial1->setRxBufferSize(SERIAL1_BUFFER_SIZE);
+    _Serial0->setRxBufferSize(SERIAL0_BUFFER_SIZE);
+    _Serial1->setRxBufferSize(SERIAL1_BUFFER_SIZE);
     _Serial2->setRxBufferSize(SERIAL2_BUFFER_SIZE);
 
     _Serial0->begin(UART_BAUD0, SERIAL_8N1, SERIAL0_RXPIN, SERIAL0_TXPIN);
@@ -142,21 +152,21 @@ void SerialTelnetBridgeClass::initTelnet()
 
     String prompt(_COMMAND_PROMPT);
 
-    welcome0 += prompt;
-    welcome1 += prompt;
-    welcome2 += prompt;
+    _welcome0 += prompt;
+    _welcome1 += prompt;
+    _welcome2 += prompt;
 
     _telnet0->setWelcomeMsg((char *)_welcome0.c_str());
-    _telnet0->setCallbackOnConnect(SerialTelnetBridgeClass::_telnetConnected);
-    _telnet0->setCallbackOnDisconnect(SerialTelnetBridgeClass::_telnetDisconnected);
+    _telnet0->setCallbackOnConnect(SerialTelnetBridgeClass::telnet0Connected);
+    _telnet0->setCallbackOnDisconnect(SerialTelnetBridgeClass::telnet0Disconnected);
     _telnet0->setPort(SERIAL0_TCP_PORT);
     //to begin telnet only
     _telnet0->setSerial(nullptr);
     _telnet0->begin(UART_BAUD0);
 
     _telnet1->setWelcomeMsg((char *)_welcome1.c_str());
-    _telnet1->setCallbackOnConnect(SerialTelnetBridgeClass::_telnetConnected);
-    _telnet1->setCallbackOnDisconnect(SerialTelnetBridgeClass::_telnetDisconnected);
+    _telnet1->setCallbackOnConnect(SerialTelnetBridgeClass::telnet1Connected);
+    _telnet1->setCallbackOnDisconnect(SerialTelnetBridgeClass::telnet1Disconnected);
     _telnet1->setPort(SERIAL1_TCP_PORT);
     _telnet1->setBufferSize(SERIAL1_BUFFER_SIZE);
     //to begin telnet only
@@ -164,8 +174,8 @@ void SerialTelnetBridgeClass::initTelnet()
     _telnet1->begin(UART_BAUD1);
 
     _telnet2->setWelcomeMsg((char *)_welcome2.c_str());
-    _telnet2->setCallbackOnConnect(SerialTelnetBridgeClass::_telnetConnected);
-    _telnet2->setCallbackOnDisconnect(SerialTelnetBridgeClass::_telnetDisconnected);
+    _telnet2->setCallbackOnConnect(SerialTelnetBridgeClass::telnet2Connected);
+    _telnet2->setCallbackOnDisconnect(SerialTelnetBridgeClass::telnet2Disconnected);
     _telnet2->setPort(SERIAL2_TCP_PORT);
     _telnet2->setBufferSize(SERIAL2_BUFFER_SIZE);
     //to begin telnet only
@@ -177,6 +187,7 @@ void SerialTelnetBridgeClass::initTelnet()
 
 void SerialTelnetBridgeClass::initConsole()
 {
+    log_d("- Initializing Console...");
 }
 
 void SerialTelnetBridgeClass::initOTA()
@@ -224,14 +235,13 @@ void SerialTelnetBridgeClass::initOTA()
         }
     });
 
-    ArduinoOTA.setHostname(HOSTNAME);
+    ArduinoOTA.setHostname(_HOSTNAME.c_str());
 
     log_d("- Hostname: %s", ArduinoOTA.getHostname().c_str());
 
     ArduinoOTA.begin();
     log_d("- OTA Started.");
 }
-
 
 void SerialTelnetBridgeClass::initClock()
 {
@@ -254,13 +264,10 @@ void SerialTelnetBridgeClass::printClock()
     struct tm *tm = localtime(&t);
 
     _telnet0->printf("\n[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
-    _telnet1->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
-    _telnet2->printf("\n[ %02d:%02d:%02d ]", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    _telnet1->printf("\n[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    _telnet2->printf("\n[ %02d:%02d:%02d ]\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
 
-    _telnet1->printf("\r\n");
-    _telnet2->printf("\r\n");
-
-    log_d("HH:MM:SS = %02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
+    log_i("HH:MM:SS = %02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
 }
 
 void SerialTelnetBridgeClass::consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli)
@@ -281,7 +288,7 @@ void SerialTelnetBridgeClass::consoleHandle(TelnetSpy *telnet, HardwareSerial *s
         String line = telnet->readStringUntil('\n');
 
         cli->parse(line); //include command execute
-        telnet->write(COMMAND_PROMPT);
+        telnet->write(_COMMAND_PROMPT.c_str());
     }
 
     telnet->handle();
@@ -289,21 +296,43 @@ void SerialTelnetBridgeClass::consoleHandle(TelnetSpy *telnet, HardwareSerial *s
 
 AsyncWebServer *SerialTelnetBridgeClass::getAsyncWebServerPtr()
 {
-    return _server;
+    if (_server)
+    {
+        return _server;
+    }
+
+    return nullptr;
 }
 
-void SerialTelnetBridgeClass::setup()
+void SerialTelnetBridgeClass::setHostname(String hostname)
 {
-    initPort();
+    _HOSTNAME = hostname;
+}
+
+void SerialTelnetBridgeClass::setApPassword(String password)
+{
+    _AP_PASSWORD = password;
+}
+
+void SerialTelnetBridgeClass::setTargetHostname(String targetHostname)
+{
+    _TARGET_HOSTNAME = targetHostname;
+}
+
+void SerialTelnetBridgeClass::setCommandPrompt(String prompt)
+{
+    _COMMAND_PROMPT = prompt;
+}
+
+bool SerialTelnetBridgeClass::begin()
+{
+    initWiFi();
     initSerial();
     initTelnet();
     initConsole();
-    initEEPROM();
-    //initFS();
-    initWiFi();
-    initClock();
     initOTA();
-    initWebServer();
+
+    return true;
 }
 
 void SerialTelnetBridgeClass::handle()

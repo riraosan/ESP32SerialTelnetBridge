@@ -27,29 +27,21 @@ SOFTWARE.
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 
-//Application class is exsample to use SerialWiFiBridgeClass Library.
+//Application class is exsample to use SerialTelnetBridgeClass Library.
 Application::Application()
 {
     _sensor_ID = 0;
     _server = getAsyncWebServerPtr();
 
     _bme = new Adafruit_BME280();
-
-    //how to take Sensor Events instead of direct readings
-    _pressur = _bme->getPressureSensor();
-    _temperatur = _bme->getTemperatureSensor();
-    _humidity = _bme->getHumiditySensor();
 }
 
-Application::~Application()
-{
-    //TODO: something to do...
-}
+Application::~Application() {}
 
 void Application::initWebServer()
 {
-    _server->on("/esp/sensor/temperatur", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("/esp/sensor/temperatur");
+    _server->on("/sensor/V1/temperature", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] /sensor/V1/temperature");
         String response;
 
         if (_bme->takeForcedMeasurement())
@@ -63,8 +55,8 @@ void Application::initWebServer()
         request->send(200, "application/json", response);
     });
 
-    _server->on("/esp/sensor/pressur", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("/esp/sensor/pressur");
+    _server->on("/sensor/V1/pressure", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] /sensor/V1/pressure");
         String response;
 
         if (_bme->takeForcedMeasurement())
@@ -77,8 +69,8 @@ void Application::initWebServer()
         request->send(200, "application/json", response);
     });
 
-    _server->on("/esp/sensor/humidity", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("/esp/sensor/humidity");
+    _server->on("/sensor/V1/humidity", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] /sensor/V1/humidity");
         String response;
 
         if (_bme->takeForcedMeasurement())
@@ -91,23 +83,8 @@ void Application::initWebServer()
         request->send(200, "application/json", response);
     });
 
-    _server->on("/esp/sensor/altitude", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("/esp/sensor/altitude");
-        String response;
-
-        if (_bme->takeForcedMeasurement())
-        {
-            _root["id"] = _sensor_ID;
-            _root["altitude"] = getAltitude(SENSORS_PRESSURE_SEALEVELHPA);
-        }
-
-        serializeJson(_root, response);
-
-        request->send(200, "application/json", response);
-    });
-
-    _server->on("/esp/sensor/all", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("/esp/sensor/all");
+    _server->on("/sensor/V1/all", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("/sensor/V1/all");
         String response;
 
         if (_bme->takeForcedMeasurement())
@@ -126,6 +103,53 @@ void Application::initWebServer()
     _server->onNotFound([](AsyncWebServerRequest *request) {
         log_d("onNotFound");
         request->send(404, "application/json", "{\"message\":\"Not found\"}");
+    });
+
+    _server->on("/clock/V1/now", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] /clock/V1/now");
+        request->send(200);
+    });
+
+    _server->on("/reset/V1/now", HTTP_PUT, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_PUT] /reset/V1/now");
+        request->send(200);
+    });
+
+    _server->on("/state/V1/now", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] /state/V1/now");
+        request->send(200);
+    });
+
+    //Relay
+    _server->on("/relay/V1/1/operation", HTTP_PUT, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_PUT] /relay/V1/1/operation");
+        request->send(200);
+    });
+
+    _server->on("/relay/V1/2/operation", HTTP_PUT, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_PUT] /relay/V1/2/operation");
+        request->send(200);
+    });
+
+    //Servo
+    _server->on("/servo/V1/1/status", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] /servo/V1/1/status");
+        request->send(200);
+    });
+
+    _server->on("/servo/V1/2/status", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] /servo/V1/2/status");
+        request->send(200);
+    });
+
+    _server->on("/servo/V1/1/operation", HTTP_PUT, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_PUT] /servo/V1/1/operation");
+        request->send(200);
+    });
+
+    _server->on("/servo/V1/2/operation", HTTP_PUT, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_PUT] /servo/V1/2/operation");
+        request->send(200);
     });
 
     _server->begin();
@@ -213,7 +237,7 @@ void Application::initBME280HumiditySensing()
 
 void Application::setup()
 {
-    SerialWiFiBridgeClass::setup();
+    SerialTelnetBridgeClass::begin();
 
     if (!_bme->begin(BME280_ADDRESS_ALTERNATE))
     {
@@ -263,27 +287,8 @@ void SerialTelnetBridgeClass::initWebServer()
         },
         nullptr, onBody);
 
-    //REST API(GET)
-    _server->on("/esp/clock", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_GET] /esp/clock");
-        //sendClockMessage();
-        request->send(200);
-    });
-
-    _server->on("/esp/reset", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_GET] /esp/reset");
-        request->send(200);
-        //sendResetMessage();
-    });
-
-    _server->on("/esp/state", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_GET] /esp/state");
-        printEspState();
-        request->send(200);
-    });
 }
 */
-
 
 /*
 void SerialWiFiBridgeClass::messageHandle(ENUM_MESSAGE_ID message_id)
@@ -303,7 +308,6 @@ void SerialWiFiBridgeClass::messageHandle(ENUM_MESSAGE_ID message_id)
     msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_NOTHING;
 }
 */
-
 
 /*
 void SerialWiFiBridgeClass::commandErrorCallbackSerial1(cmd_error *cmdError)

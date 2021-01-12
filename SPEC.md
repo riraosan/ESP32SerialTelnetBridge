@@ -34,16 +34,15 @@ DELETE：データを削除します。
 
 <!-- code_chunk_output -->
 
-- [ESP32 UART-Telnetブリッジ 要求仕様書　{ignore=true}](#esp32-uart-telnetブリッジ-要求仕様書ignoretrue)
-  - [目次 {ignore=true}](#目次-ignoretrue)
-    - [[swb-1]Telnet端末からコマンドを実行する](#swb-1telnet端末からコマンドを実行する)
-    - [[swb-2]REST APIでポートの制御をする](#swb-2rest-apiでポートの制御をする)
-    - [[swb-3]ESP32の状態をコマンドで表示する](#swb-3esp32の状態をコマンドで表示する)
-    - [[swb-4]初期化ボタンを押下するとSSID、パスワード情報を消去する](#swb-4初期化ボタンを押下するとssidパスワード情報を消去する)
-    - [[swb-5]現在のESP32の状態をLEDで表示する](#swb-5現在のesp32の状態をledで表示する)
-    - [[swb-6]リセットボタンでESP32をリセットする](#swb-6リセットボタンでesp32をリセットする)
-    - [[swb-7]REST APIでBME280センサーのデータを取得する](#swb-7rest-apiでbme280センサーのデータを取得する)
-    - [[swb-8]コマンド入力によりUART0の出力先をTelnet1またはTelnet2へ変更する](#swb-8コマンド入力によりuart0の出力先をtelnet1またはtelnet2へ変更する)
+- [要求仕様一覧](#要求仕様一覧)
+  - [[swb-1]Telnet端末からコマンドを実行する](#swb-1telnet端末からコマンドを実行する)
+  - [[swb-2]REST APIでポートの制御をする](#swb-2rest-apiでポートの制御をする)
+  - [[swb-3]ESP32の状態をコマンドで表示する](#swb-3esp32の状態をコマンドで表示する)
+  - [[swb-4]初期化ボタンを押下するとSSID、パスワード情報を消去する](#swb-4初期化ボタンを押下するとssid-パスワード情報を消去する)
+  - [[swb-5]現在のESP32の状態をLEDで表示する](#swb-5現在のesp32の状態をledで表示する)
+  - [[swb-6]リセットボタンでESP32をリセットする](#swb-6リセットボタンでesp32をリセットする)
+  - [[swb-7]REST APIでBME280センサーのデータを取得する](#swb-7rest-apiでbme280センサーのデータを取得する)
+  - [[swb-8]コマンド入力によりUART0の出力先をTelnet1またはTelnet2へ変更する](#swb-8コマンド入力によりuart0の出力先をtelnet1またはtelnet2へ変更する)
 
 <!-- /code_chunk_output -->
 
@@ -144,7 +143,10 @@ DELETE：データを削除します。
 //HAL(JSON Hypertext Application Language)
 //https://tools.ietf.org/html/draft-kelly-json-hal-08
 //POST リクエスト
-//esp32.local デバイスが　esp32_clock.local デバイスへ温度、湿度、気圧情報をPOSTリクエストで送る。
+//esp32.local デバイスが　esp32_clock.local デバイスへ温度、湿度、気圧情報をPOSTリクエストで
+送る。
+
+<pre>
 {
     "device_id": 12345678, //MACアドレスをキーにしてデバイスIDを送信する
     "created_at": "2021-01-10 12:01:16",
@@ -182,21 +184,37 @@ DELETE：データを削除します。
         "relay": {}
     }
 }
+</pre>
+
+
+
 //esp32からesp32_clockへデータを送信する
 //bme280 POST
 //esp32_clcok.localに実装する。
-"href": "/sensor/V1/all"
-"href": "/sensor/V1/temperature"
-"href": "/sensor/V1/humidity"
-"href": "/sensor/V1/pressure"
-//esp32のサーボの角度を変更する
-//Servo PUT
-"href": "/servo/V1/1/operation"
-"href": "/servo/V1/2/operation"
-//Servo GET
-"href": "/servo/V1/1/status"
-"href": "/servo/V1/2/status"
+//BME280 POST(esp32->esp32_clock)
+* [x] "href": "/sensor/V1/all"
+* [x] "href": "/sensor/V1/temperature"
+* [x] "href": "/sensor/V1/humidity"
+* [x] "href": "/sensor/V1/pressure"
 
-//Relay PUT
-"href": "/relay/V1/1/operation"
-"href": "/relay/V1/2/operation"
+//esp32のサーボの角度を変更する
+//Servo PUT(esp32_clock->esp32)
+* [x] "href": "/servo/V1/1/operation"
+* [x] "href": "/servo/V1/2/operation"
+
+//Servo GET(esp32_clock->esp32)
+* [x] "href": "/servo/V1/1/status"
+* [x] "href": "/servo/V1/2/status"
+
+//Relay PUT(esp32_clock->esp32)
+* [x] "href": "/relay/V1/1/operation"
+* [x] "href": "/relay/V1/2/operation"
+
+//Clock GET(esp32_clock->esp32)
+* [x] "href": "/clock/V1/now"
+
+//Reset PUT(esp32_clock->esp32)
+* [x] "href": "/reset/V1/now"
+
+//Clock GET(esp32_clock->esp32)
+* [x] "href": "/stat/V1/now"

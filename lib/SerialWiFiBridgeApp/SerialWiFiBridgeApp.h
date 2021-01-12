@@ -89,31 +89,12 @@ private:
     HardwareSerial *_Serial2;
 
 public:
+    SerialTelnetBridgeClass();
+    ~SerialTelnetBridgeClass() = default;
+
     SerialTelnetBridgeClass(const SerialTelnetBridgeClass &);
     SerialTelnetBridgeClass &operator=(const SerialTelnetBridgeClass &);
 
-    SerialTelnetBridgeClass()
-    {
-        _dns = new DNSServer();
-        _server = new AsyncWebServer(80);
-        _wifiManager = new AsyncWiFiManager(_server, _dns);
-
-        _telnet0 = new TelnetSpy();
-        _telnet1 = new TelnetSpy();
-        _telnet2 = new TelnetSpy();
-
-        _Serial0 = new HardwareSerial(0);
-        _Serial1 = new HardwareSerial(1);
-        _Serial2 = new HardwareSerial(2);
-
-        _HOSTNAME = "esp32_001";
-        _TARGET_HOSTNAME = "esp32_gw";
-        _AP_PASSWORD = "1234";
-        _COMMAND_PROMPT = "~esp$ ";
-        _AP_NAME = "ESP-G-AP";
-    }
-
-    ~SerialTelnetBridgeClass() = default;
 
     SimpleCLI _cli0;
     SimpleCLI _cli1;

@@ -24,14 +24,21 @@ SOFTWARE.
 
 #pragma once
 
+#include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 #include <SerialWiFiBridgeApp.h>
 
-#define SEALEVELPRESSURE_HPA 1013.25f
+//Message ID
+enum class ENUM_MESSAGE_ID
+{
+    MSG_COMMAND_RESET,
+    MSG_COMMAND_CLOCK,
+    MSG_COMMAND_NOTHING
+};
 
-class MyApplication : public SerialWiFiBridgeClass
+class Application : public SerialTelnetBridgeClass
 {
 private:
     AsyncWebServer *_server;
@@ -43,27 +50,35 @@ private:
     uint32_t _sensor_ID;
 
     StaticJsonDocument<200> _root;
+    Ticker _sensorChecker;
 
-    MyApplication();
-    ~MyApplication();
+    Application();
+    ~Application();
 
-    MyApplication(const MyApplication &);
-    MyApplication &operator=(const MyApplication &);
+    Application(const Application &);
+    Application &operator=(const Application &);
 
 public:
-    static MyApplication &getInstance()
+    static Application &getInstance()
     {
-        static MyApplication instance;
+        static Application instance;
         return instance;
     }
-    void initBME280();
+    static void sendSensorInfo();
+    void initBME280HumiditySensing();
+    void initBME280WeatherStation();
+    void initUnifiedBME280();
     void initWebServer();
-    void setup();
-    //void handle();
 
     float getTemperature(void);
     float getPressure(void);
     float getHumidity(void);
     float getAltitude(float seaLevel);
     uint32_t getSensorID(void);
+    
+    //message loop
+    void messageHandle(ENUM_MESSAGE_ID message_id);
+
+    void setup();
+    void handle();
 };

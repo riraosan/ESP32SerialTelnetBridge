@@ -22,33 +22,32 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "Application.h"
+#include <Application.h>
 #include <esp32-hal-log.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 
-//MyApplication class is exsample to use SerialWiFiBridgeClass Library.
-MyApplication::MyApplication()
+//Application class is exsample to use SerialWiFiBridgeClass Library.
+Application::Application()
 {
     _sensor_ID = 0;
     _server = getAsyncWebServerPtr();
 
     _bme = new Adafruit_BME280();
 
+    //how to take Sensor Events instead of direct readings
     _pressur = _bme->getPressureSensor();
     _temperatur = _bme->getTemperatureSensor();
     _humidity = _bme->getHumiditySensor();
 }
 
-MyApplication::~MyApplication()
+Application::~Application()
 {
     //TODO: something to do...
 }
 
-void MyApplication::initWebServer()
+void Application::initWebServer()
 {
-    SerialWiFiBridgeClass::initWebServer();
-    //https://qiita.com/TakahiRoyte/items/949f4e88caecb02119aa#%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%95%E3%82%A7%E3%83%BC%E3%82%B9%E3%81%AE%E7%B5%B1%E4%B8%80
     _server->on("/esp/sensor/temperatur", HTTP_GET, [this](AsyncWebServerRequest *request) {
         log_d("/esp/sensor/temperatur");
         String response;
@@ -99,7 +98,7 @@ void MyApplication::initWebServer()
         if (_bme->takeForcedMeasurement())
         {
             _root["id"] = _sensor_ID;
-            _root["altitude"] = getAltitude(SEALEVELPRESSURE_HPA);
+            _root["altitude"] = getAltitude(SENSORS_PRESSURE_SEALEVELHPA);
         }
 
         serializeJson(_root, response);
@@ -133,7 +132,7 @@ void MyApplication::initWebServer()
     log_d("Server Started");
 }
 
-float MyApplication::getTemperature(void)
+float Application::getTemperature(void)
 {
     float value = _bme->readTemperature();
     log_d("Temperature = %2.1f*C", value);
@@ -141,7 +140,7 @@ float MyApplication::getTemperature(void)
     return value;
 }
 
-float MyApplication::getPressure(void)
+float Application::getPressure(void)
 {
     float pascals = _bme->readPressure();
     log_d("Pressure = %4.1f (hPa)", pascals / 100.0f);
@@ -149,7 +148,7 @@ float MyApplication::getPressure(void)
     return pascals / 100.0f;
 }
 
-float MyApplication::getHumidity(void)
+float Application::getHumidity(void)
 {
     float humidity = _bme->readHumidity();
     log_d("Humidity = %2.1f %", humidity);
@@ -157,15 +156,15 @@ float MyApplication::getHumidity(void)
     return humidity;
 }
 
-float MyApplication::getAltitude(float seaLevel)
+float Application::getAltitude(float seaLevel)
 {
-    float altitude = _bme->readAltitude(SEALEVELPRESSURE_HPA);
+    float altitude = _bme->readAltitude(SENSORS_PRESSURE_SEALEVELHPA);
     log_d("Altitude = %4.1f m", altitude);
 
     return altitude;
 }
 
-uint32_t MyApplication::getSensorID(void)
+uint32_t Application::getSensorID(void)
 {
     uint32_t id = _bme->sensorID();
     log_d("Sensor ID = %d", id);
@@ -173,8 +172,49 @@ uint32_t MyApplication::getSensorID(void)
     return id;
 }
 
-void MyApplication::initBME280()
+// See Also. https://github.com/adafruit/Adafruit_BME280_Library/blob/master/examples/advancedsettings/advancedsettings.ino
+// weather monitoring
+void Application::initBME280WeatherStation()
 {
+    log_i("-- Weather Station Scenario --");
+    log_i("forced mode, 1x temperature / 1x humidity / 1x pressure oversampling,");
+    log_i("filter off");
+    _bme->setSampling(Adafruit_BME280::MODE_FORCED,
+                      Adafruit_BME280::SAMPLING_X1, // temperature
+                      Adafruit_BME280::SAMPLING_X1, // pressure
+                      Adafruit_BME280::SAMPLING_X1, // humidity
+                      Adafruit_BME280::FILTER_OFF);
+
+    // suggested rate is 1/60Hz (1m)
+}
+
+// humidity sensing
+void Application::initBME280HumiditySensing()
+{
+    log_i("-- Humidity Sensing Scenario --");
+    log_i("forced mode, 2x temperature / 4x humidity / 0x pressure oversampling");
+    log_i("= pressure off, filter off");
+    _bme->setSampling(Adafruit_BME280::MODE_FORCED,
+                      Adafruit_BME280::SAMPLING_X2,   // temperature
+                      Adafruit_BME280::SAMPLING_NONE, // pressure
+                      Adafruit_BME280::SAMPLING_X4,   // humidity
+                      Adafruit_BME280::FILTER_OFF);
+
+    if (_bme->takeForcedMeasurement())
+    {
+        _sensor_ID = getSensorID();
+        getTemperature();
+        getPressure();
+        getHumidity();
+    }
+
+    // suggested rate is 1Hz (1s)
+}
+
+void Application::setup()
+{
+    SerialWiFiBridgeClass::setup();
+
     if (!_bme->begin(BME280_ADDRESS_ALTERNATE))
     {
         log_e("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
@@ -190,34 +230,132 @@ void MyApplication::initBME280()
     {
         log_d("ESP could find a BME280 sensor!");
         log_d("SensorID was: 0x%x", _bme->sensorID());
+#ifdef WEATER_STATION_SENARIO
+        initBME280WeatherStation();
+#endif
+#ifdef HUMIDITY_SENSING_SENARIO
+        initBME280HumiditySensing();
+#endif
+    }
+    initWebServer();
+}
 
-        // humidity sensing
-        // See Also. https://github.com/adafruit/Adafruit_BME280_Library/blob/master/examples/advancedsettings/advancedsettings.ino
-        log_i("-- Humidity Sensing Scenario --");
-        log_i("forced mode, 1x temperature / 1x humidity / 0x pressure oversampling");
-        log_i("= pressure off, filter off");
-        _bme->setSampling(Adafruit_BME280::sensor_mode::MODE_FORCED,
-                          Adafruit_BME280::sensor_sampling::SAMPLING_X2,   // temperature
-                          Adafruit_BME280::sensor_sampling::SAMPLING_NONE, // pressure
-                          Adafruit_BME280::sensor_sampling::SAMPLING_X4,   // humidity
-                          Adafruit_BME280::sensor_filter::FILTER_OFF);
+void Application::handle()
+{
+}
 
-        if (_bme->takeForcedMeasurement())
-        {
-            _sensor_ID = getSensorID();
-            getTemperature();
-            getPressure();
-            getHumidity();
-        }
+/*
+void SerialTelnetBridgeClass::onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+    ;
+}
+*/
 
-        // suggested rate is 1Hz (1s)
-        delay(1000);
+/*
+void SerialTelnetBridgeClass::initWebServer()
+{
+    log_d("- Initializing HTTP Server...");
+    //REST API(POST)
+    _server->on(
+        "/esp/setting", HTTP_POST, [this](AsyncWebServerRequest *request) {
+            log_d("[HTTP_POST] /");
+            request->send(200);
+        },
+        nullptr, onBody);
+
+    //REST API(GET)
+    _server->on("/esp/clock", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] /esp/clock");
+        //sendClockMessage();
+        request->send(200);
+    });
+
+    _server->on("/esp/reset", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] /esp/reset");
+        request->send(200);
+        //sendResetMessage();
+    });
+
+    _server->on("/esp/state", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] /esp/state");
+        printEspState();
+        request->send(200);
+    });
+}
+*/
+
+
+/*
+void SerialWiFiBridgeClass::messageHandle(ENUM_MESSAGE_ID message_id)
+{
+    switch (message_id)
+    {
+    case ENUM_MESSAGE_ID::MSG_COMMAND_CLOCK:
+        printClock();
+        break;
+    case ENUM_MESSAGE_ID::MSG_COMMAND_RESET:
+        ESP.restart();
+        delay(2000);
+        break;
+    default:;
+    }
+
+    msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_NOTHING;
+}
+*/
+
+
+/*
+void SerialWiFiBridgeClass::commandErrorCallbackSerial1(cmd_error *cmdError)
+{
+    CommandError commandError(cmdError); // Create wrapper object
+    log_e("ERROR: (Serial1) %s", commandError.toString().c_str());
+}
+
+void SerialWiFiBridgeClass::commandErrorCallbackSerial2(cmd_error *cmdError)
+{
+    CommandError commandError(cmdError); // Create wrapper object
+    log_e("ERROR: (Serial2) %s", commandError.toString().c_str());
+}
+
+void SerialWiFiBridgeClass::commandCalllbackSerial1(cmd *cmdline)
+{
+    Command command(cmdline); // Create wrapper object
+
+    log_d("cmmand line = %s", command.toString());
+
+    // Get first (and only) Argument
+    Argument arg = command.getArgument(0);
+
+    // Get value of argument
+    String argVal = arg.getValue();
+
+    if (arg.getValue() == "clock")
+    {
+        //sendClockMessage();
+    }
+    else if (arg.getValue() == "reset")
+    {
+        //sendResetMessage();
+    }
+    else if (arg.getValue() == "state")
+    {
+        printEspState();
     }
 }
 
-void MyApplication::setup()
+void SerialWiFiBridgeClass::commandCalllbackSerial2(cmd *cmdline)
 {
-    SerialWiFiBridgeClass::setup();
-    initBME280();
-    initWebServer();
 }
+
+void SerialWiFiBridgeClass::initConsole()
+{
+    _cli0.setOnError(SerialWiFiBridgeClass::commandErrorCallback);
+    _cli1.setOnError(SerialWiFiBridgeClass::commandErrorCallbackSerial1);
+    _cli2.setOnError(SerialWiFiBridgeClass::commandErrorCallbackSerial2);
+
+    _command0 = _cli0.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllback);
+    _command1 = _cli1.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllbackSerial1);
+    _command2 = _cli2.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllbackSerial2);
+}
+*/

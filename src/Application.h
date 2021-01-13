@@ -65,10 +65,13 @@ public:
         return instance;
     }
     static void sendSensorInfo();
+    static void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
+
     void initBME280HumiditySensing();
     void initBME280WeatherStation();
     void initUnifiedBME280();
     void initWebServer();
+    void initConsole();
 
     float getTemperature(void);
     float getPressure(void);
@@ -76,8 +79,15 @@ public:
     float getAltitude(float seaLevel);
     uint32_t getSensorID(void);
 
-    //message loop
-    void messageHandle(ENUM_MESSAGE_ID message_id);
+    void messageHandler(ENUM_MESSAGE_ID message_id);
+
+    static void commandErrorCallbackSerial0(cmd_error *cmdError);
+    static void commandErrorCallbackSerial1(cmd_error *cmdError);
+    static void commandErrorCallbackSerial2(cmd_error *cmdError);
+
+    static void commandCallbackSerial0(cmd *cmdline);
+    static void commandCallbackSerial1(cmd *cmdline);
+    static void commandCallbackSerial2(cmd *cmdline);
 
     void setup();
     void handle();

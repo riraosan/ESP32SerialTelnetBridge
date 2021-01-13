@@ -95,7 +95,6 @@ public:
     SerialTelnetBridgeClass(const SerialTelnetBridgeClass &);
     SerialTelnetBridgeClass &operator=(const SerialTelnetBridgeClass &);
 
-
     SimpleCLI _cli0;
     SimpleCLI _cli1;
     SimpleCLI _cli2;

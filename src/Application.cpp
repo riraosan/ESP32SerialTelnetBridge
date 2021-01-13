@@ -24,6 +24,8 @@ SOFTWARE.
 
 #include <Application.h>
 
+static ENUM_MESSAGE_ID msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_NOTHING;
+
 //Application class is exsample to use SerialTelnetBridgeClass Library.
 Application::Application()
 {
@@ -34,6 +36,65 @@ Application::Application()
 }
 
 Application::~Application() {}
+
+void Application::commandErrorCallbackSerial0(cmd_error *cmdError)
+{
+    CommandError commandError(cmdError); // Create wrapper object
+    log_e("ERROR: (Serial1) %s", commandError.toString().c_str());
+}
+
+void Application::commandErrorCallbackSerial1(cmd_error *cmdError)
+{
+    CommandError commandError(cmdError); // Create wrapper object
+    log_e("ERROR: (Serial1) %s", commandError.toString().c_str());
+}
+
+void Application::commandErrorCallbackSerial2(cmd_error *cmdError)
+{
+    CommandError commandError(cmdError); // Create wrapper object
+    log_e("ERROR: (Serial2) %s", commandError.toString().c_str());
+}
+
+void Application::commandCallbackSerial0(cmd *cmdline) {}
+
+void Application::commandCallbackSerial1(cmd *cmdline)
+{
+    Command command(cmdline); // Create wrapper object
+
+    log_d("cmmand line = %s", command.toString());
+
+    // Get first (and only) Argument
+    Argument arg = command.getArgument(0);
+
+    // Get value of argument
+    String argVal = arg.getValue();
+
+    if (arg.getValue() == "clock")
+    {
+        //sendClockMessage();
+    }
+    else if (arg.getValue() == "reset")
+    {
+        //sendResetMessage();
+    }
+    else if (arg.getValue() == "state")
+    {
+        printEspState();
+    }
+}
+
+void Application::commandCallbackSerial2(cmd *cmdline) {}
+
+void Application::initConsole()
+{
+    _cli0.setOnError(Application::commandErrorCallbackSerial0);
+    _cli1.setOnError(Application::commandErrorCallbackSerial1);
+    _cli2.setOnError(Application::commandErrorCallbackSerial2);
+
+    _command0 = _cli0.addSingleArgCmd("esp", Application::commandCallbackSerial0);
+    _command1 = _cli1.addSingleArgCmd("esp", Application::commandCallbackSerial1);
+    _command2 = _cli2.addSingleArgCmd("esp", Application::commandCallbackSerial2);
+}
 
 void Application::initWebServer()
 {
@@ -265,15 +326,17 @@ void Application::handle()
 {
 }
 
-void Application::onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {}
+void Application::onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+    ;
+}
 
-/*
-void SerialWiFiBridgeClass::messageHandle(ENUM_MESSAGE_ID message_id)
+void Application::messageHandler(ENUM_MESSAGE_ID message_id)
 {
     switch (message_id)
     {
     case ENUM_MESSAGE_ID::MSG_COMMAND_CLOCK:
-        printClock();
+        //printClock();
         break;
     case ENUM_MESSAGE_ID::MSG_COMMAND_RESET:
         ESP.restart();
@@ -284,59 +347,3 @@ void SerialWiFiBridgeClass::messageHandle(ENUM_MESSAGE_ID message_id)
 
     msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_NOTHING;
 }
-*/
-
-/*
-void SerialWiFiBridgeClass::commandErrorCallbackSerial1(cmd_error *cmdError)
-{
-    CommandError commandError(cmdError); // Create wrapper object
-    log_e("ERROR: (Serial1) %s", commandError.toString().c_str());
-}
-
-void SerialWiFiBridgeClass::commandErrorCallbackSerial2(cmd_error *cmdError)
-{
-    CommandError commandError(cmdError); // Create wrapper object
-    log_e("ERROR: (Serial2) %s", commandError.toString().c_str());
-}
-
-void SerialWiFiBridgeClass::commandCalllbackSerial1(cmd *cmdline)
-{
-    Command command(cmdline); // Create wrapper object
-
-    log_d("cmmand line = %s", command.toString());
-
-    // Get first (and only) Argument
-    Argument arg = command.getArgument(0);
-
-    // Get value of argument
-    String argVal = arg.getValue();
-
-    if (arg.getValue() == "clock")
-    {
-        //sendClockMessage();
-    }
-    else if (arg.getValue() == "reset")
-    {
-        //sendResetMessage();
-    }
-    else if (arg.getValue() == "state")
-    {
-        printEspState();
-    }
-}
-
-void SerialWiFiBridgeClass::commandCalllbackSerial2(cmd *cmdline)
-{
-}
-
-void SerialWiFiBridgeClass::initConsole()
-{
-    _cli0.setOnError(SerialWiFiBridgeClass::commandErrorCallback);
-    _cli1.setOnError(SerialWiFiBridgeClass::commandErrorCallbackSerial1);
-    _cli2.setOnError(SerialWiFiBridgeClass::commandErrorCallbackSerial2);
-
-    _command0 = _cli0.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllback);
-    _command1 = _cli1.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllbackSerial1);
-    _command2 = _cli2.addSingleArgCmd("esp", SerialWiFiBridgeClass::commandCalllbackSerial2);
-}
-*/

@@ -23,8 +23,7 @@ SOFTWARE.
 */
 
 #include <ArduinoOTA.h>
-#include <SerialWiFiBridgeApp.h>
-#include <esp32-hal-log.h>
+#include <SerialTelnetBridge.h>
 
 /*
     log_e("")：エラー

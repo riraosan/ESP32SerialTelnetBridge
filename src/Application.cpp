@@ -23,9 +23,6 @@ SOFTWARE.
 */
 
 #include <Application.h>
-#include <esp32-hal-log.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BME280.h>
 
 //Application class is exsample to use SerialTelnetBridgeClass Library.
 Application::Application()
@@ -268,27 +265,7 @@ void Application::handle()
 {
 }
 
-/*
-void SerialTelnetBridgeClass::onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-{
-    ;
-}
-*/
-
-/*
-void SerialTelnetBridgeClass::initWebServer()
-{
-    log_d("- Initializing HTTP Server...");
-    //REST API(POST)
-    _server->on(
-        "/esp/setting", HTTP_POST, [this](AsyncWebServerRequest *request) {
-            log_d("[HTTP_POST] /");
-            request->send(200);
-        },
-        nullptr, onBody);
-
-}
-*/
+void Application::onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {}
 
 /*
 void SerialWiFiBridgeClass::messageHandle(ENUM_MESSAGE_ID message_id)

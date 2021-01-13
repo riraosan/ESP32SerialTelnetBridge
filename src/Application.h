@@ -28,7 +28,7 @@ SOFTWARE.
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#include <SerialWiFiBridgeApp.h>
+#include <SerialTelnetBridge.h>
 
 //Message ID
 enum class ENUM_MESSAGE_ID
@@ -75,7 +75,7 @@ public:
     float getHumidity(void);
     float getAltitude(float seaLevel);
     uint32_t getSensorID(void);
-    
+
     //message loop
     void messageHandle(ENUM_MESSAGE_ID message_id);
 

@@ -38,7 +38,7 @@ SerialTelnetBridgeClass::SerialTelnetBridgeClass()
 {
     _dns = new DNSServer();
     _server = new AsyncWebServer(80);
-    _wifiManager = new AsyncWiFiManager(_server, _dns);
+    _WiFiManager = new AsyncWiFiManager(_server, _dns);
 
     _telnet0 = new TelnetSpy();
     _telnet1 = new TelnetSpy();
@@ -50,19 +50,67 @@ SerialTelnetBridgeClass::SerialTelnetBridgeClass()
 
     _HOSTNAME = "esp32_001";
     _TARGET_HOSTNAME = "esp32_gw";
-    _AP_PASSWORD = "1234";
+    _AP_PASSWORD = "";
     _COMMAND_PROMPT = "~esp$ ";
     _AP_NAME = "ESP-G-AP";
+    _PORTAL_TIMEOUT = 180;
+
+    initSerialPorts();
+}
+
+void SerialTelnetBridgeClass::initSerialPorts()
+{
+    _port0.SERIAL_RXPIN = 3;
+    _port0.SERIAL_TXPIN = 1;
+    _port0.SERIAL_TCP_PORT = 55550;
+
+    _port1.SERIAL_RXPIN = 16;
+    _port1.SERIAL_TXPIN = 17;
+    _port1.SERIAL_TCP_PORT = 55551;
+
+    _port2.SERIAL_RXPIN = 4;
+    _port2.SERIAL_TXPIN = 2;
+    _port2.SERIAL_TCP_PORT = 55552;
+}
+
+void SerialTelnetBridgeClass::setSerialPort0(SerialSettings &port0)
+{
+    _port0 = port0;
+}
+
+void SerialTelnetBridgeClass::setSerialPort1(SerialSettings &port1)
+{
+    _port1 = port1;
+}
+
+void SerialTelnetBridgeClass::setSerialPort2(SerialSettings &port2)
+{
+    _port2 = port2;
+}
+
+void SerialTelnetBridgeClass::getSerialPort0(SerialSettings &port0)
+{
+    port0 = _port0;
+}
+
+void SerialTelnetBridgeClass::getSerialPort1(SerialSettings &port1)
+{
+    port1 = _port1;
+}
+
+void SerialTelnetBridgeClass::getSerialPort2(SerialSettings &port2)
+{
+    port2 = _port2;
 }
 
 void SerialTelnetBridgeClass::initWiFi()
 {
     log_d("- Initializing Connecting to WiFi AP...");
 
-    _wifiManager->setDebugOutput(false);
-    _wifiManager->setConfigPortalTimeout(_PORTAL_TIMEOUT);
+    _WiFiManager->setDebugOutput(false);
+    _WiFiManager->setConfigPortalTimeout(_PORTAL_TIMEOUT);
 
-    _wifiManager->setAPCallback([](AsyncWiFiManager *myWiFiManager) {
+    _WiFiManager->setAPCallback([](AsyncWiFiManager *myWiFiManager) {
         log_d("- No known WiFi found");
         log_d("- Starting AP: ");
         log_d("%s", myWiFiManager->getConfigPortalSSID().c_str());
@@ -71,7 +119,7 @@ void SerialTelnetBridgeClass::initWiFi()
 
     if (_AP_PASSWORD.isEmpty())
     {
-        if (!_wifiManager->autoConnect(_AP_NAME.c_str()))
+        if (!_WiFiManager->autoConnect(_AP_NAME.c_str()))
         {
             log_e("- Failed to connect and hit timeout");
             ESP.restart();
@@ -80,7 +128,7 @@ void SerialTelnetBridgeClass::initWiFi()
     }
     else
     {
-        if (!_wifiManager->autoConnect(_AP_NAME.c_str(), _AP_PASSWORD.c_str()))
+        if (!_WiFiManager->autoConnect(_AP_NAME.c_str(), _AP_PASSWORD.c_str()))
         {
             log_e("- Failed to connect and hit timeout");
             ESP.restart();
@@ -137,27 +185,27 @@ void SerialTelnetBridgeClass::initSerial()
 {
     log_d("- Initializing Serial...");
 
-    _Serial0->setDebugOutput(true);
-    //_Serial1->setDebugOutput(true);
-    //_Serial2->setDebugOutput(true);
+    _Serial0->setDebugOutput(false);
+    _Serial1->setDebugOutput(false);
+    _Serial2->setDebugOutput(false);
 
     //set buffer size
-    _Serial0->setRxBufferSize(SERIAL0_BUFFER_SIZE);
-    _Serial1->setRxBufferSize(SERIAL1_BUFFER_SIZE);
-    _Serial2->setRxBufferSize(SERIAL2_BUFFER_SIZE);
+    _Serial0->setRxBufferSize(_port0.SERIAL_BUFFER_SIZE);
+    _Serial1->setRxBufferSize(_port1.SERIAL_BUFFER_SIZE);
+    _Serial2->setRxBufferSize(_port2.SERIAL_BUFFER_SIZE);
 
-    _Serial0->begin(UART_BAUD0, SERIAL_8N1, SERIAL0_RXPIN, SERIAL0_TXPIN);
-    _Serial1->begin(UART_BAUD1, SERIAL_8N1, SERIAL1_RXPIN, SERIAL1_TXPIN);
-    _Serial2->begin(UART_BAUD2, SERIAL_8N1, SERIAL2_RXPIN, SERIAL2_TXPIN);
+    _Serial0->begin(_port0.UART_BAUD, _port0.SERIAL_PARAM, _port0.SERIAL_RXPIN, _port0.SERIAL_TXPIN);
+    _Serial1->begin(_port1.UART_BAUD, _port1.SERIAL_PARAM, _port1.SERIAL_RXPIN, _port1.SERIAL_TXPIN);
+    _Serial2->begin(_port2.UART_BAUD, _port2.SERIAL_PARAM, _port2.SERIAL_RXPIN, _port2.SERIAL_TXPIN);
 
-    _Serial0->println("Serial0 Txd is on pin: " + String(SERIAL0_TXPIN));
-    _Serial0->println("Serial0 Rxd is on pin: " + String(SERIAL0_RXPIN));
+    _Serial0->println("Serial0 Txd is on pin: " + String(_port0.SERIAL_TXPIN));
+    _Serial0->println("Serial0 Rxd is on pin: " + String(_port0.SERIAL_RXPIN));
 
-    _Serial1->println("Serial1 Txd is on pin: " + String(SERIAL1_TXPIN));
-    _Serial1->println("Serial1 Rxd is on pin: " + String(SERIAL1_RXPIN));
+    _Serial1->println("Serial1 Txd is on pin: " + String(_port1.SERIAL_TXPIN));
+    _Serial1->println("Serial1 Rxd is on pin: " + String(_port1.SERIAL_RXPIN));
 
-    _Serial2->println("Serial2 Txd is on pin: " + String(SERIAL2_TXPIN));
-    _Serial2->println("Serial2 Rxd is on pin: " + String(SERIAL2_RXPIN));
+    _Serial2->println("Serial2 Txd is on pin: " + String(_port2.SERIAL_TXPIN));
+    _Serial2->println("Serial2 Rxd is on pin: " + String(_port2.SERIAL_RXPIN));
 
     _Serial0->flush();
     _Serial1->flush();
@@ -179,28 +227,29 @@ void SerialTelnetBridgeClass::initTelnet()
     _telnet0->setWelcomeMsg((char *)_welcome0.c_str());
     _telnet0->setCallbackOnConnect(SerialTelnetBridgeClass::telnet0Connected);
     _telnet0->setCallbackOnDisconnect(SerialTelnetBridgeClass::telnet0Disconnected);
-    _telnet0->setPort(SERIAL0_TCP_PORT);
+    _telnet0->setPort(_port0.SERIAL_TCP_PORT);
+    _telnet0->setBufferSize(_port0.SERIAL_BUFFER_SIZE);
     //to begin telnet only
     _telnet0->setSerial(nullptr);
-    _telnet0->begin(UART_BAUD0);
+    _telnet0->begin(_port0.UART_BAUD);
 
     _telnet1->setWelcomeMsg((char *)_welcome1.c_str());
     _telnet1->setCallbackOnConnect(SerialTelnetBridgeClass::telnet1Connected);
     _telnet1->setCallbackOnDisconnect(SerialTelnetBridgeClass::telnet1Disconnected);
-    _telnet1->setPort(SERIAL1_TCP_PORT);
-    _telnet1->setBufferSize(SERIAL1_BUFFER_SIZE);
+    _telnet1->setPort(_port1.SERIAL_TCP_PORT);
+    _telnet1->setBufferSize(_port1.SERIAL_BUFFER_SIZE);
     //to begin telnet only
     _telnet1->setSerial(nullptr);
-    _telnet1->begin(UART_BAUD1);
+    _telnet1->begin(_port1.UART_BAUD);
 
     _telnet2->setWelcomeMsg((char *)_welcome2.c_str());
     _telnet2->setCallbackOnConnect(SerialTelnetBridgeClass::telnet2Connected);
     _telnet2->setCallbackOnDisconnect(SerialTelnetBridgeClass::telnet2Disconnected);
-    _telnet2->setPort(SERIAL2_TCP_PORT);
-    _telnet2->setBufferSize(SERIAL2_BUFFER_SIZE);
+    _telnet2->setPort(_port2.SERIAL_TCP_PORT);
+    _telnet2->setBufferSize(_port2.SERIAL_BUFFER_SIZE);
     //to begin telnet only
     _telnet2->setSerial(nullptr);
-    _telnet2->begin(UART_BAUD2);
+    _telnet2->begin(_port2.UART_BAUD);
 
     delay(500);
 }

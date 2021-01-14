@@ -38,56 +38,29 @@ SOFTWARE.
 #include <HardwareSerial.h>
 #include <SimpleCLI.h>
 
+class SerialSettings
+{
+public:
+    uint32_t UART_BAUD;        // Baudrate UART
+    uint32_t SERIAL_PARAM;     // Data/Parity/Stop UART
+    uint8_t SERIAL_RXPIN;      // receive Pin UART
+    uint8_t SERIAL_TXPIN;      // transmit Pin UART
+    uint16_t SERIAL_TCP_PORT;  // Telnet Port UART
+    size_t SERIAL_BUFFER_SIZE; // RX Buffer Size UART
+
+    SerialSettings()
+    {
+        UART_BAUD = 115200;
+        SERIAL_PARAM = SERIAL_8N1;
+        SERIAL_RXPIN = 0;
+        SERIAL_TXPIN = 0;
+        SERIAL_TCP_PORT = 0;
+        SERIAL_BUFFER_SIZE = 1024;
+    }
+};
+
 class SerialTelnetBridgeClass
 {
-private:
-    String _HOSTNAME;
-    String _TARGET_HOSTNAME;
-    String _AP_PASSWORD;
-
-    String _welcome0;
-    String _welcome1;
-    String _welcome2;
-    String _COMMAND_PROMPT;
-    String _AP_NAME;
-
-    const uint32_t _MONITOR_SPEED = 115200;
-    const uint16_t _PORTAL_TIMEOUT = 180;
-
-    /*************************  COM Port 0 *******************************/
-    const uint32_t UART_BAUD0 = 115200;        // Baudrate UART0
-    const uint32_t SERIAL_PARAM0 = SERIAL_8N1; // Data/Parity/Stop UART0
-    const uint8_t SERIAL0_RXPIN = 3;           // receive Pin UART0
-    const uint8_t SERIAL0_TXPIN = 1;           // transmit Pin UART0
-    const uint16_t SERIAL0_TCP_PORT = 55550;   // Telnet Port UART0
-    const size_t SERIAL0_BUFFER_SIZE = 1024;   // RX Buffer Size UART0
-    /*************************  COM Port 1 *******************************/
-    const uint32_t UART_BAUD1 = 115200;        // Baudrate UART1
-    const uint32_t SERIAL_PARAM1 = SERIAL_8N1; // Data/Parity/Stop UART1
-    const uint8_t SERIAL1_RXPIN = 16;          // receive Pin UART1
-    const uint8_t SERIAL1_TXPIN = 17;          // transmit Pin UART1
-    const uint16_t SERIAL1_TCP_PORT = 55551;   // Telnet Port UART1
-    const size_t SERIAL1_BUFFER_SIZE = 1024;   // RX Buffer Size UART1
-    /*************************  COM Port 2 *******************************/
-    const uint32_t UART_BAUD2 = 115200;        // Baudrate UART2
-    const uint32_t SERIAL_PARAM2 = SERIAL_8N1; // Data/Parity/Stop UART2
-    const uint8_t SERIAL2_RXPIN = 4;           // receive Pin UART2
-    const uint8_t SERIAL2_TXPIN = 2;           // transmit Pin UART2
-    const uint16_t SERIAL2_TCP_PORT = 55552;   // Telnet Port UART2
-    const size_t SERIAL2_BUFFER_SIZE = 1024;   // RX Buffer Size UART2
-
-    DNSServer *_dns;
-    AsyncWebServer *_server;
-    AsyncWiFiManager *_wifiManager;
-
-    TelnetSpy *_telnet0;
-    TelnetSpy *_telnet1;
-    TelnetSpy *_telnet2;
-
-    HardwareSerial *_Serial0;
-    HardwareSerial *_Serial1;
-    HardwareSerial *_Serial2;
-
 public:
     SerialTelnetBridgeClass();
     ~SerialTelnetBridgeClass() = default;
@@ -95,13 +68,15 @@ public:
     SerialTelnetBridgeClass(const SerialTelnetBridgeClass &);
     SerialTelnetBridgeClass &operator=(const SerialTelnetBridgeClass &);
 
-    SimpleCLI _cli0;
-    SimpleCLI _cli1;
-    SimpleCLI _cli2;
+    //TODO　構造体の変数を変更するメソッドを作成する。
 
-    Command _command0;
-    Command _command1;
-    Command _command2;
+    virtual void setSerialPort0(SerialSettings &port0);
+    virtual void setSerialPort1(SerialSettings &port1);
+    virtual void setSerialPort2(SerialSettings &port2);
+
+    virtual void getSerialPort0(SerialSettings &port0);
+    virtual void getSerialPort1(SerialSettings &port1);
+    virtual void getSerialPort2(SerialSettings &port2);
 
     static void telnet0Connected();
     static void telnet0Disconnected();
@@ -120,6 +95,7 @@ public:
     virtual void initConsole();
     virtual void initClock();
     virtual void printClock();
+    virtual void initSerialPorts();
 
     void setHostname(String hostname);
     void setApPassword(String password);
@@ -131,4 +107,42 @@ public:
     virtual void handle();
 
     AsyncWebServer *getAsyncWebServerPtr();
+
+protected:
+    SimpleCLI _cli0;
+    SimpleCLI _cli1;
+    SimpleCLI _cli2;
+
+    Command _command0;
+    Command _command1;
+    Command _command2;
+
+private:
+    String _HOSTNAME;
+    String _TARGET_HOSTNAME;
+    String _AP_PASSWORD;
+
+    String _welcome0;
+    String _welcome1;
+    String _welcome2;
+    String _COMMAND_PROMPT;
+    String _AP_NAME;
+
+    uint16_t _PORTAL_TIMEOUT;
+
+    DNSServer *_dns;
+    AsyncWebServer *_server;
+    AsyncWiFiManager *_WiFiManager;
+
+    TelnetSpy *_telnet0;
+    TelnetSpy *_telnet1;
+    TelnetSpy *_telnet2;
+
+    HardwareSerial *_Serial0;
+    HardwareSerial *_Serial1;
+    HardwareSerial *_Serial2;
+
+    SerialSettings _port0;
+    SerialSettings _port1;
+    SerialSettings _port2;
 };

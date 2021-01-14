@@ -37,6 +37,15 @@ Application::Application()
 
 Application::~Application() {}
 
+void initPorts()
+{
+    pinMode(25, OUTPUT);
+    pinMode(26, OUTPUT);
+
+    digitalWrite(25, LOW);
+    digitalWrite(26, LOW);
+}
+
 void Application::commandErrorCallbackSerial0(cmd_error *cmdError)
 {
     CommandError commandError(cmdError); // Create wrapper object
@@ -322,10 +331,6 @@ void Application::setup()
     initWebServer();
 }
 
-void Application::handle()
-{
-}
-
 void Application::onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
     ;
@@ -346,4 +351,8 @@ void Application::messageHandler(ENUM_MESSAGE_ID message_id)
     }
 
     msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_NOTHING;
+}
+
+void Application::handle()
+{
 }

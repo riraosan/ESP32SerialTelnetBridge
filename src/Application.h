@@ -45,7 +45,7 @@ private:
 
     Adafruit_BME280 *_bme;
     Adafruit_Sensor *_pressur;
-    Adafruit_Sensor *_temperatur;
+    Adafruit_Sensor *_temperature;
     Adafruit_Sensor *_humidity;
     uint32_t _sensor_ID;
 
@@ -72,6 +72,7 @@ public:
     void initUnifiedBME280();
     void initWebServer();
     void initConsole();
+    void initPorts();
 
     float getTemperature(void);
     float getPressure(void);

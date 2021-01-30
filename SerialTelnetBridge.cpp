@@ -30,7 +30,7 @@ SOFTWARE.
     log_w("")：警告
     log_i("")：情報
     log_d("")：デバッグ
-    log_v("")：verbose?
+    log_v("")：詳細
     log_d("")：通常
 */
 
@@ -186,32 +186,30 @@ void SerialTelnetBridgeClass::initSerial()
     log_d("- Initializing Serial...");
 
     _Serial0->setDebugOutput(false);
-    _Serial1->setDebugOutput(false);
+    //_Serial1->setDebugOutput(false);
     _Serial2->setDebugOutput(false);
 
     //set buffer size
     _Serial0->setRxBufferSize(_port0.SERIAL_BUFFER_SIZE);
-    _Serial1->setRxBufferSize(_port1.SERIAL_BUFFER_SIZE);
+    //_Serial1->setRxBufferSize(_port1.SERIAL_BUFFER_SIZE);
     _Serial2->setRxBufferSize(_port2.SERIAL_BUFFER_SIZE);
 
     _Serial0->begin(_port0.UART_BAUD, _port0.SERIAL_PARAM, _port0.SERIAL_RXPIN, _port0.SERIAL_TXPIN);
-    _Serial1->begin(_port1.UART_BAUD, _port1.SERIAL_PARAM, _port1.SERIAL_RXPIN, _port1.SERIAL_TXPIN);
+    //_Serial1->begin(_port1.UART_BAUD, _port1.SERIAL_PARAM, _port1.SERIAL_RXPIN, _port1.SERIAL_TXPIN);
     _Serial2->begin(_port2.UART_BAUD, _port2.SERIAL_PARAM, _port2.SERIAL_RXPIN, _port2.SERIAL_TXPIN);
 
     _Serial0->println("Serial0 Txd is on pin: " + String(_port0.SERIAL_TXPIN));
     _Serial0->println("Serial0 Rxd is on pin: " + String(_port0.SERIAL_RXPIN));
 
-    _Serial1->println("Serial1 Txd is on pin: " + String(_port1.SERIAL_TXPIN));
-    _Serial1->println("Serial1 Rxd is on pin: " + String(_port1.SERIAL_RXPIN));
+    //_Serial1->println("Serial1 Txd is on pin: " + String(_port1.SERIAL_TXPIN));
+    //_Serial1->println("Serial1 Rxd is on pin: " + String(_port1.SERIAL_RXPIN));
 
     _Serial2->println("Serial2 Txd is on pin: " + String(_port2.SERIAL_TXPIN));
     _Serial2->println("Serial2 Rxd is on pin: " + String(_port2.SERIAL_RXPIN));
 
     _Serial0->flush();
-    _Serial1->flush();
+    //_Serial1->flush();
     _Serial2->flush();
-
-    delay(500);
 }
 
 void SerialTelnetBridgeClass::initTelnet()
@@ -391,6 +389,11 @@ void SerialTelnetBridgeClass::setTargetHostname(String targetHostname)
 void SerialTelnetBridgeClass::setCommandPrompt(String prompt)
 {
     _COMMAND_PROMPT = prompt;
+}
+
+void SerialTelnetBridgeClass::setApName(String apName)
+{
+    _AP_NAME = apName;
 }
 
 bool SerialTelnetBridgeClass::begin()

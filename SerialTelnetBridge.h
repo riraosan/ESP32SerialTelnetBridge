@@ -24,17 +24,14 @@ SOFTWARE.
 
 #pragma once
 
-#include <SPIFFS.h>
 #include <ArduinoOTA.h>
 #include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
 #include <ESPAsyncWiFiManager.h>
 #include <TelnetSpy.h>
-#include <EEPROM.h>
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
-#include <Ticker.h>
 #include <HardwareSerial.h>
 #include <SimpleCLI.h>
 
@@ -98,6 +95,7 @@ public:
     virtual void initSerialPorts();
 
     void setHostname(String hostname);
+    void setApName(String apName);
     void setApPassword(String password);
     void setTargetHostname(String targetHostname);
     void setCommandPrompt(String prompt);

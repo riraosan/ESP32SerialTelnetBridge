@@ -2,10 +2,12 @@
 .pio
 .vscode
 .DS_Store
-src
+src/Application.*
+src/main.cpp
 lib
 data
 test
 *.ini
 SPEC.md
 asserts
+

@@ -355,4 +355,5 @@ void Application::messageHandler(ENUM_MESSAGE_ID message_id)
 
 void Application::handle()
 {
+    SerialTelnetBridgeClass::handle();
 }

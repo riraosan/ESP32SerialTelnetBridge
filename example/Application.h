@@ -50,7 +50,7 @@ private:
     uint32_t _sensor_ID;
 
     StaticJsonDocument<200> _root;
-    Ticker _sensorChecker;
+    //Ticker _sensorChecker;
 
     Application();
     ~Application();

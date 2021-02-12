@@ -31,19 +31,68 @@ Application::Application()
 {
     _sensor_ID = 0;
     _server = getAsyncWebServerPtr();
-
     _bme = new Adafruit_BME280();
 }
 
 Application::~Application() {}
 
-void initPorts()
+void Application::initPorts()
 {
     pinMode(25, OUTPUT);
     pinMode(26, OUTPUT);
 
     digitalWrite(25, LOW);
     digitalWrite(26, LOW);
+
+    delay(1000);
+    digitalWrite(25, HIGH);
+    delay(1000);
+    digitalWrite(25, LOW);
+    /*
+    delay(1000);
+    digitalWrite(26, HIGH);
+    delay(1000);
+    digitalWrite(26, LOW);
+*/
+}
+
+void Application::initClock(void)
+{
+    configTzTime("JST-9", "ntp.nict.jp", "ntp.jst.mfeed.ad.jp");
+    delay(2000);
+}
+
+void Application::_checkSensor()
+{
+    msg_id = ENUM_MESSAGE_ID::MSG_COMMAND_CHECK_SENSOR;
+}
+
+void Application::checkSensor(void)
+{
+    StaticJsonDocument<384> local;
+
+    String chipID(_getESP32ChipID());
+    String sensorID(getSensorID());
+
+    local["cip_id"] = chipID;
+    local["created_at"] = makeTime();
+    local["status"] = "online";
+
+    JsonObject _links = local.createNestedObject("_links");
+    _links["self"]["href"] = String(_ENDPOINT_URI_sensor);
+    _links["next"]["href"] = String(_ENDPOINT_URI_relay);
+
+    JsonObject _embedded_sensor = local["_embedded"]["sensor"].createNestedObject(sensorID);
+    _embedded_sensor["device_name"] = "BME280";
+    _embedded_sensor["temperature"] = getTemperature();
+    _embedded_sensor["humidity"] = getHumidity();
+    _embedded_sensor["pressure"] = getPressure();
+
+    serializeJson(local, _responseJson);
+
+    String debug;
+    serializeJsonPretty(local, debug);
+    log_d("%s", debug.c_str());
 }
 
 void Application::commandErrorCallbackSerial0(cmd_error *cmdError)
@@ -107,105 +156,55 @@ void Application::initConsole()
 
 void Application::initWebServer()
 {
-    _server->on("/sensor/V1/temperature", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_GET] /sensor/V1/temperature");
-        String response;
+    _server->on(_ENDPOINT_URI_sensor, HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] %s", _ENDPOINT_URI_sensor);
 
-        if (_bme->takeForcedMeasurement())
+        if (_sensors_responseJson.isEmpty())
         {
-            _root["id"] = _sensor_ID;
-            _root["temperatur"] = getTemperature();
+            request->send(204, "application/json; charset=UTF-8", "{\"message\":\"No Content\"}");
+            return;
+        }
+        else if (request->hasParam(Application::_PARAM_DEVICE_ID))
+        {
+            String chip_id(request->getParam(_PARAM_DEVICE_ID)->value());
+
+            if (chip_id == _getESP32ChipID())
+            {
+                request->send(200, "application/json; charset=UTF-8", _sensors_responseJson);
+                return;
+            }
+        }
+        request->send(400, "application/json; charset=UTF-8", "{\"message\":\"Bad Request\"}");
+    });
+
+    _server->on(_ENDPOINT_URI_relay, HTTP_PUT, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_PUT] %s", _ENDPOINT_URI_relay);
+
+        if (_relays_responseJson.isEmpty())
+        {
+            request->send(204, "application/json; charset=UTF-8", "{\"message\":\"No Content\"}");
+            return;
+        }
+        else if (request->hasParam(Application::_PARAM_DEVICE_ID))
+        {
+            String chip_id(request->getParam(_PARAM_DEVICE_ID)->value());
+
+            if (chip_id == _getESP32ChipID())
+            {
+                //parse request json-body
+                //TODO sending message
+
+                request->send(200, "application/json; charset=UTF-8", _relays_responseJson);
+                return;
+            }
         }
 
-        serializeJson(_root, response);
-
-        request->send(200, "application/json", response);
-    });
-
-    _server->on("/sensor/V1/pressure", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_GET] /sensor/V1/pressure");
-        String response;
-
-        if (_bme->takeForcedMeasurement())
-        {
-            _root["id"] = _sensor_ID;
-            _root["pressur"] = getPressure();
-        }
-        serializeJson(_root, response);
-
-        request->send(200, "application/json", response);
-    });
-
-    _server->on("/sensor/V1/humidity", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_GET] /sensor/V1/humidity");
-        String response;
-
-        if (_bme->takeForcedMeasurement())
-        {
-            _root["id"] = _sensor_ID;
-            _root["humidity"] = getHumidity();
-        }
-        serializeJson(_root, response);
-
-        request->send(200, "application/json", response);
-    });
-
-    _server->on("/sensor/V1/all", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("/sensor/V1/all");
-        String response;
-
-        if (_bme->takeForcedMeasurement())
-        {
-            _root["id"] = _sensor_ID;
-            _root["temperatur"] = getTemperature();
-            _root["pressur"] = getPressure();
-            _root["humidity"] = getHumidity();
-        }
-
-        serializeJson(_root, response);
-
-        request->send(200, "application/json", response);
-    });
-
-    _server->onNotFound([](AsyncWebServerRequest *request) {
-        log_d("onNotFound");
-        request->send(404, "application/json", "{\"message\":\"Not found\"}");
-    });
-
-    _server->on("/clock/V1/now", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_GET] /clock/V1/now");
-        request->send(200);
-    });
-
-    _server->on("/reset/V1/now", HTTP_PUT, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_PUT] /reset/V1/now");
-        request->send(200);
-    });
-
-    _server->on("/state/V1/now", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_GET] /state/V1/now");
-        request->send(200);
-    });
-
-    //Relay
-    _server->on("/relay/V1/1/operation", HTTP_PUT, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_PUT] /relay/V1/1/operation");
-        request->send(200);
-    });
-
-    _server->on("/relay/V1/2/operation", HTTP_PUT, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_PUT] /relay/V1/2/operation");
-        request->send(200);
+        request->send(400, "application/json; charset=UTF-8", "{\"message\":\"Bad Request\"}");
     });
 
     //Servo
-    _server->on("/servo/V1/1/status", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_GET] /servo/V1/1/status");
-        request->send(200);
-    });
-
-    _server->on("/servo/V1/2/status", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_GET] /servo/V1/2/status");
+    _server->on(_ENDPOINT_URI_relay, HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] %s", _ENDPOINT_URI_relay);
         request->send(200);
     });
 
@@ -214,9 +213,9 @@ void Application::initWebServer()
         request->send(200);
     });
 
-    _server->on("/servo/V1/2/operation", HTTP_PUT, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_PUT] /servo/V1/2/operation");
-        request->send(200);
+    _server->onNotFound([](AsyncWebServerRequest *request) {
+        log_d("onNotFound");
+        request->send(404, "application/json; charset=UTF-8", "{\"message\":\"Not found\"}");
     });
 
     _server->begin();
@@ -234,7 +233,7 @@ float Application::getTemperature(void)
 float Application::getPressure(void)
 {
     float pascals = _bme->readPressure();
-    log_d("Pressure = %4.1f (hPa)", pascals / 100.0f);
+    log_d("Pressure = %4.1f(hPa)", pascals / 100.0f);
 
     return pascals / 100.0f;
 }
@@ -242,7 +241,7 @@ float Application::getPressure(void)
 float Application::getHumidity(void)
 {
     float humidity = _bme->readHumidity();
-    log_d("Humidity = %2.1f %", humidity);
+    log_d("Humidity = %2.1f%%", humidity);
 
     return humidity;
 }
@@ -275,8 +274,6 @@ void Application::initBME280WeatherStation()
                       Adafruit_BME280::SAMPLING_X1, // pressure
                       Adafruit_BME280::SAMPLING_X1, // humidity
                       Adafruit_BME280::FILTER_OFF);
-
-    // suggested rate is 1/60Hz (1m)
 }
 
 // humidity sensing
@@ -298,8 +295,63 @@ void Application::initBME280HumiditySensing()
         getPressure();
         getHumidity();
     }
+}
 
-    // suggested rate is 1Hz (1s)
+String Application::makeTime()
+{
+    time_t t = time(NULL);
+    struct tm *tm = localtime(&t);
+
+    char buffer[128] = {0};
+    sprintf(buffer, "%04d-%02d-%02dT%02d:%02d:%02d+0900",
+            tm->tm_year + 1900,
+            tm->tm_mon + 1,
+            tm->tm_mday,
+            tm->tm_hour,
+            tm->tm_min,
+            tm->tm_sec);
+
+    log_i("[time] %s", String(buffer).c_str());
+
+    return String(buffer);
+}
+
+String Application::_byteToHexString(uint8_t *buf, uint8_t length, String strSeperator)
+{
+    char HEX_CHAR_ARRAY[17] = "0123456789ABCDEF";
+    String dataString;
+
+    for (uint8_t i = 0; i < length; i++)
+    {
+        byte v = buf[i] / 16;
+        byte w = buf[i] % 16;
+        if (i > 0)
+        {
+            dataString += strSeperator;
+        }
+        dataString += String(HEX_CHAR_ARRAY[v]);
+        dataString += String(HEX_CHAR_ARRAY[w]);
+    }
+
+    dataString.toUpperCase();
+
+    return dataString;
+}
+
+String Application::_getESP32ChipID(void)
+{
+    uint64_t chipid = 0;
+    int chipid_size = 6;
+    uint8_t chipid_arr[chipid_size] = {0};
+
+    chipid = ESP.getEfuseMac(); //The chip ID is essentially its MAC address(length: 6 bytes).
+
+    for (uint8_t i = 0; i < chipid_size; i++)
+    {
+        chipid_arr[i] = (chipid >> (8 * i)) & 0xff;
+    }
+
+    return _byteToHexString(chipid_arr, chipid_size, "");
 }
 
 void Application::setup()
@@ -328,7 +380,11 @@ void Application::setup()
         initBME280HumiditySensing();
 #endif
     }
+    initPorts();
     initWebServer();
+    initClock();
+
+    sensorChecker.attach(60, Application::_checkSensor);
 }
 
 void Application::onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
@@ -340,6 +396,9 @@ void Application::messageHandler(ENUM_MESSAGE_ID message_id)
 {
     switch (message_id)
     {
+    case ENUM_MESSAGE_ID::MSG_COMMAND_CHECK_SENSOR:
+        checkSensor();
+        break;
     case ENUM_MESSAGE_ID::MSG_COMMAND_CLOCK:
         //printClock();
         break;
@@ -356,4 +415,5 @@ void Application::messageHandler(ENUM_MESSAGE_ID message_id)
 void Application::handle()
 {
     SerialTelnetBridgeClass::handle();
+    messageHandler(msg_id);
 }

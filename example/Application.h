@@ -28,6 +28,7 @@ SOFTWARE.
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
+#include <Ticker.h>
 #include <SerialTelnetBridge.h>
 
 //Message ID
@@ -35,50 +36,37 @@ enum class ENUM_MESSAGE_ID
 {
     MSG_COMMAND_RESET,
     MSG_COMMAND_CLOCK,
+    MSG_COMMAND_CHECK_SENSOR,
     MSG_COMMAND_NOTHING
 };
 
 class Application : public SerialTelnetBridgeClass
 {
-private:
-    AsyncWebServer *_server;
-
-    Adafruit_BME280 *_bme;
-    Adafruit_Sensor *_pressur;
-    Adafruit_Sensor *_temperature;
-    Adafruit_Sensor *_humidity;
-    uint32_t _sensor_ID;
-
-    StaticJsonDocument<200> _root;
-    //Ticker _sensorChecker;
-
-    Application();
-    ~Application();
-
-    Application(const Application &);
-    Application &operator=(const Application &);
-
 public:
     static Application &getInstance()
     {
         static Application instance;
         return instance;
     }
-    static void sendSensorInfo();
+    static void sendSensorInfo(void);
     static void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
 
-    void initBME280HumiditySensing();
-    void initBME280WeatherStation();
-    void initUnifiedBME280();
-    void initWebServer();
-    void initConsole();
-    void initPorts();
+    void initBME280HumiditySensing(void);
+    void initBME280WeatherStation(void);
+    void initUnifiedBME280(void);
+    void initWebServer(void);
+    void initConsole(void);
+    void initPorts(void);
+    void initClock(void);
 
     float getTemperature(void);
     float getPressure(void);
     float getHumidity(void);
     float getAltitude(float seaLevel);
     uint32_t getSensorID(void);
+
+    String makeTime(void);
+    void checkSensor(void);
 
     void messageHandler(ENUM_MESSAGE_ID message_id);
 
@@ -90,6 +78,36 @@ public:
     static void commandCallbackSerial1(cmd *cmdline);
     static void commandCallbackSerial2(cmd *cmdline);
 
-    void setup();
-    void handle();
+    void setup(void);
+    void handle(void);
+
+private:
+    AsyncWebServer *_server;
+
+    Adafruit_BME280 *_bme;
+    Adafruit_Sensor *_pressur;
+    Adafruit_Sensor *_temperature;
+    Adafruit_Sensor *_humidity;
+    uint32_t _sensor_ID;
+    Ticker sensorChecker;
+
+    String _sensors_responseJson;
+    String _relays_responseJson;
+    String _servos_responseJson;
+
+    Application();
+    ~Application();
+
+    Application(const Application &);
+    Application &operator=(const Application &);
+
+    PROGMEM prog_char *_PARAM_DEVICE_ID = "device_id";
+    PROGMEM prog_char *_ENDPOINT_URI_sensor = "/api/v1/sensors/all";
+    PROGMEM prog_char *_ENDPOINT_URI_relay = "/api/v1/relays/operations";
+    PROGMEM prog_char *_ENDPOINT_URI_servo = "/api/v1/servos/operations";
+
+    String _getESP32ChipID(void);
+    String _byteToHexString(uint8_t *buf, uint8_t length, String strSeperator = ":");
+
+    static void _checkSensor(void);
 };

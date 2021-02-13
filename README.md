@@ -1,4 +1,4 @@
-# ESP32 Seria Telnet Bridge (Prot Setp2)
+# ESP32 Serial Telnet Bridge (Prot Setp2)
 
 ## Contents
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
@@ -31,7 +31,7 @@
 - [ ] REST APIにPUTリクエストを送信して、サーボを制御する
   - [ ] サーボモーター制御
 - [x] REST APIにGETリクエストを送信して、BME280センサーの情報を取得する
-  - [ ] BME280で取得した、気温、湿度、気圧をレスポンスで返却する。
+  - [x] BME280で取得した、気温、湿度、気圧をレスポンスで返却する。
 - [ ] 初期化ボタンで、WiFiのログイン情報（SSID、パスワード）を消去する
 - [ ] ステータスLEDでデバイスの状態を表示・表現する
 - [ ] コマンドよりWiFi通信状態を確認する

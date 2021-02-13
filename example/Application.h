@@ -37,6 +37,10 @@ enum class ENUM_MESSAGE_ID
     MSG_COMMAND_RESET,
     MSG_COMMAND_CLOCK,
     MSG_COMMAND_CHECK_SENSOR,
+    MSG_COMMAND_RELAY_0_ON,
+    MSG_COMMAND_RELAY_0_OFF,
+    MSG_COMMAND_RELAY_1_ON,
+    MSG_COMMAND_RELAY_1_OFF,
     MSG_COMMAND_NOTHING
 };
 
@@ -49,7 +53,6 @@ public:
         return instance;
     }
     static void sendSensorInfo(void);
-    static void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
 
     void initBME280HumiditySensing(void);
     void initBME280WeatherStation(void);
@@ -101,13 +104,15 @@ private:
     Application(const Application &);
     Application &operator=(const Application &);
 
-    PROGMEM prog_char *_PARAM_DEVICE_ID = "device_id";
-    PROGMEM prog_char *_ENDPOINT_URI_sensor = "/api/v1/sensors/all";
-    PROGMEM prog_char *_ENDPOINT_URI_relay = "/api/v1/relays/operations";
-    PROGMEM prog_char *_ENDPOINT_URI_servo = "/api/v1/servos/operations";
+    constexpr static PROGMEM prog_char *_PARAM_DEVICE_ID = "device_id";
+    constexpr static PROGMEM prog_char *_ENDPOINT_URI_sensor = "/api/v1/sensors/all";
+    constexpr static PROGMEM prog_char *_ENDPOINT_URI_relay = "/api/v1/relays/operations";
+    constexpr static PROGMEM prog_char *_ENDPOINT_URI_servo = "/api/v1/servos/operations";
 
     String _getESP32ChipID(void);
     String _byteToHexString(uint8_t *buf, uint8_t length, String strSeperator = ":");
+
+    static void _handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
 
     static void _checkSensor(void);
 };

@@ -43,17 +43,6 @@ void Application::initPorts()
 
     digitalWrite(25, LOW);
     digitalWrite(26, LOW);
-
-    delay(1000);
-    digitalWrite(25, HIGH);
-    delay(1000);
-    digitalWrite(25, LOW);
-    /*
-    delay(1000);
-    digitalWrite(26, HIGH);
-    delay(1000);
-    digitalWrite(26, LOW);
-*/
 }
 
 void Application::initClock(void)
@@ -69,12 +58,12 @@ void Application::_checkSensor()
 
 void Application::checkSensor(void)
 {
-    StaticJsonDocument<384> local;
+    StaticJsonDocument<512> local;
 
     String chipID(_getESP32ChipID());
     String sensorID(getSensorID());
 
-    local["cip_id"] = chipID;
+    local["chip_id"] = chipID;
     local["created_at"] = makeTime();
     local["status"] = "online";
 
@@ -88,7 +77,7 @@ void Application::checkSensor(void)
     _embedded_sensor["humidity"] = getHumidity();
     _embedded_sensor["pressure"] = getPressure();
 
-    serializeJson(local, _responseJson);
+    serializeJson(local, _sensors_responseJson);
 
     String debug;
     serializeJsonPretty(local, debug);
@@ -153,6 +142,29 @@ void Application::initConsole()
     _command1 = _cli1.addSingleArgCmd("esp", Application::commandCallbackSerial1);
     _command2 = _cli2.addSingleArgCmd("esp", Application::commandCallbackSerial2);
 }
+//template
+void Application::_handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+    log_d("Application::handleBody");
+    String localJson;
+
+    StaticJsonDocument<512> _local;
+
+    log_d("BodyStart: %u Byte", total);
+    for (size_t i = 0; i < len; i++)
+    {
+        localJson += (char)data[i];
+    }
+    log_d("BodyEnd: %u Byte", index + len);
+
+    DeserializationError error = deserializeJson(_local, localJson);
+
+    if (error)
+    {
+        log_d("deserializeJson() failed: %s", error.f_str());
+        return;
+    }
+}
 
 void Application::initWebServer()
 {
@@ -177,39 +189,84 @@ void Application::initWebServer()
         request->send(400, "application/json; charset=UTF-8", "{\"message\":\"Bad Request\"}");
     });
 
-    _server->on(_ENDPOINT_URI_relay, HTTP_PUT, [this](AsyncWebServerRequest *request) {
+    _server->on(
+        _ENDPOINT_URI_relay, HTTP_PUT, [this](AsyncWebServerRequest *request) {
         log_d("[HTTP_PUT] %s", _ENDPOINT_URI_relay);
 
-        if (_relays_responseJson.isEmpty())
+        if (request->hasParam(Application::_PARAM_DEVICE_ID))
         {
-            request->send(204, "application/json; charset=UTF-8", "{\"message\":\"No Content\"}");
-            return;
-        }
-        else if (request->hasParam(Application::_PARAM_DEVICE_ID))
-        {
-            String chip_id(request->getParam(_PARAM_DEVICE_ID)->value());
+            String chip_id(request->getParam(Application::_PARAM_DEVICE_ID)->value());
 
-            if (chip_id == _getESP32ChipID())
+            if (chip_id == Application::_getESP32ChipID())
             {
-                //parse request json-body
-                //TODO sending message
-
                 request->send(200, "application/json; charset=UTF-8", _relays_responseJson);
                 return;
             }
         }
 
-        request->send(400, "application/json; charset=UTF-8", "{\"message\":\"Bad Request\"}");
-    });
+        request->send(400, "application/json; charset=UTF-8", "{\"message\":\"Bad Request\"}"); },
+        nullptr,
+        [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+            log_d("Application::handleBody");
+            String localJson;
+
+            StaticJsonDocument<512> _local;
+
+            log_d("BodyStart: %u Byte", total);
+            for (size_t i = 0; i < len; i++)
+            {
+                localJson += (char)data[i];
+            }
+            log_d("BodyEnd: %u Byte", index + len);
+
+            DeserializationError error = deserializeJson(_local, localJson);
+
+            if (error)
+            {
+                log_d("deserializeJson() failed: %s", error.f_str());
+                return;
+            }
+
+            if (request->hasParam(_PARAM_DEVICE_ID))
+            {
+                String chip_id(request->getParam(_PARAM_DEVICE_ID)->value());
+
+                if (chip_id == _getESP32ChipID())
+                {
+                    String _embedded_relay_0_turn((const char *)_local["_embedded"]["relay"]["0"]["turn"]);
+                    String _embedded_relay_1_turn((const char *)_local["_embedded"]["relay"]["1"]["turn"]);
+
+                    if (_embedded_relay_0_turn == "on")
+                    {
+                        digitalWrite(25, HIGH);
+                    }
+                    else
+                    {
+                        digitalWrite(25, LOW);
+                    }
+
+                    if (_embedded_relay_1_turn == "on")
+                    {
+                        digitalWrite(26, HIGH);
+                    }
+                    else
+                    {
+                        digitalWrite(26, LOW);
+                    }
+
+                    serializeJsonPretty(_local, _relays_responseJson);
+                }
+            }
+        });
 
     //Servo
-    _server->on(_ENDPOINT_URI_relay, HTTP_GET, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_GET] %s", _ENDPOINT_URI_relay);
+    _server->on(_ENDPOINT_URI_servo, HTTP_GET, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_GET] %s", _ENDPOINT_URI_servo);
         request->send(200);
     });
 
-    _server->on("/servo/V1/1/operation", HTTP_PUT, [this](AsyncWebServerRequest *request) {
-        log_d("[HTTP_PUT] /servo/V1/1/operation");
+    _server->on(_ENDPOINT_URI_servo, HTTP_PUT, [this](AsyncWebServerRequest *request) {
+        log_d("[HTTP_PUT] %s", _ENDPOINT_URI_servo);
         request->send(200);
     });
 
@@ -387,25 +444,40 @@ void Application::setup()
     sensorChecker.attach(60, Application::_checkSensor);
 }
 
-void Application::onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-{
-    ;
-}
-
 void Application::messageHandler(ENUM_MESSAGE_ID message_id)
 {
     switch (message_id)
     {
-    case ENUM_MESSAGE_ID::MSG_COMMAND_CHECK_SENSOR:
-        checkSensor();
-        break;
     case ENUM_MESSAGE_ID::MSG_COMMAND_CLOCK:
-        //printClock();
+        log_d("ENUM_MESSAGE_ID::MSG_COMMAND_CLOCK");
         break;
     case ENUM_MESSAGE_ID::MSG_COMMAND_RESET:
+        log_d("ENUM_MESSAGE_ID::MSG_COMMAND_RESET");
         ESP.restart();
         delay(2000);
         break;
+    case ENUM_MESSAGE_ID::MSG_COMMAND_CHECK_SENSOR:
+        log_d("ENUM_MESSAGE_ID::MSG_COMMAND_CHECK_SENSOR");
+        checkSensor();
+        break;
+        /*
+    case ENUM_MESSAGE_ID::MSG_COMMAND_RELAY_0_ON:
+        log_d("ENUM_MESSAGE_ID::MSG_COMMAND_RELAY_0_ON");
+        digitalWrite(25, HIGH);
+        break;
+    case ENUM_MESSAGE_ID::MSG_COMMAND_RELAY_0_OFF:
+        log_d("ENUM_MESSAGE_ID::MSG_COMMAND_RELAY_0_OFF");
+        digitalWrite(25, LOW);
+        break;
+    case ENUM_MESSAGE_ID::MSG_COMMAND_RELAY_1_ON:
+        log_d("ENUM_MESSAGE_ID::MSG_COMMAND_RELAY_1_ON");
+        digitalWrite(26, HIGH);
+        break;
+    case ENUM_MESSAGE_ID::MSG_COMMAND_RELAY_1_OFF:
+        log_d("ENUM_MESSAGE_ID::MSG_COMMAND_RELAY_1_OFF");
+        digitalWrite(26, LOW);
+        break;
+        */
     default:;
     }
 

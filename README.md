@@ -1,44 +1,35 @@
-# ESP32 Serial Telnet Bridge (Prot Setp2)
+# ESP32 Serial Telnet Bridge (Setp2)
 
 ## Contents
-<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
-<!-- code_chunk_output -->
-
-- [ESP32 Seria Telnet Bridge (Prot Setp2)](#esp32-seria-telnet-bridge-prot-setp2)
+- ESP32 Seria Telnet Bridge (Setp2)
   - [Contents](#contents)
   - [✅ Features](#-features)
   - [✅ 開発環境](#-開発環境)
   - [✅ 回路図](#-回路図)
   - [✅ Wemos lolin32 board Pinout](#-wemos-lolin32-board-pinout)
   - [✅ Using ESP32 libraries](#-using-esp32-libraries)
-  - [🚀 How to use](#-how-to-use)
+  - [✅ How to use](#-how-to-use)
   - [👤 Author](#-author)
   - [📝 License](#-license)
-
-<!-- /code_chunk_output -->
 
 ## ✅ Features
 
 - [x] スマートフォンのブラウザ画面で、SSID、パスワードを入力してWiFiアクセスポイントに接続する
-- [x] シリアル入出力(UART1, UART2)をTelnetへリダイレクトする
-  - [ ] ESP32へTelnet接続時に、そのデバイスのIPアドレスを表示する
-- [x] Telnetからコマンドを入力してデバイスの操作をする
-  - [ ] リレーモジュール制御
-  - [ ] サーボモーター制御
-- [ ] REST APIにPUTリクエストを送信して、リレーを制御する
-  - [ ] リレーモジュール制御
-- [ ] REST APIにPUTリクエストを送信して、サーボを制御する
-  - [ ] サーボモーター制御
 - [x] REST APIにGETリクエストを送信して、BME280センサーの情報を取得する
   - [x] BME280で取得した、気温、湿度、気圧をレスポンスで返却する。
+- [x] シリアル入出力(UART1, UART2)をTelnetへリダイレクトする
+- [x] Telnetからコマンドを入力してデバイスの操作をする
+- [x] リレーモジュール制御
+  - [x] REST APIにPUTリクエストを送信して、リレーを制御する
+- [ ] サーボモーター制御
+  - [ ] REST APIにPUTリクエストを送信して、サーボを制御する
 - [ ] 初期化ボタンで、WiFiのログイン情報（SSID、パスワード）を消去する
 - [ ] ステータスLEDでデバイスの状態を表示・表現する
 - [ ] コマンドよりWiFi通信状態を確認する
   - [ ] 電波強度確認
 - [ ] リセットボタンでデバイスをハードウェアリセットする
-
-[要求仕様書はこちら](./SPEC.md)
+- [ ] ESP32へTelnet接続時に、そのデバイスのIPアドレスを表示する
 
 ## ✅ 開発環境
 
@@ -51,8 +42,8 @@
 - [USB-Serial Bridge]()
 
 ## ✅ 回路図
-（仮）
-![回路図](https://www.quadcept.com/ja/manual/common/images/20200904104154565-e8.png)
+
+![回路図]()
 
 ## ✅ Wemos lolin32 board Pinout
 
@@ -70,11 +61,7 @@
 [ArduinoStreamUtils](https://github.com/bblanchon/ArduinoStreamUtils.git)
 -->
 
-## 🚀 How to use
-
-```zsh
-$ git clone https://github.com/riraosan/ESP32SerialWiFiBridge.git
-```
+## ✅ How to use
 
 TODO:　ESP32SerialTelnetBridgeクラスを派生元にしてアプリケーションクラスを作成する。
 
@@ -92,3 +79,5 @@ TODO: APIの説明
 ## 📝 License
 
 This software is released under the [MIT](https://github.com/riraosan/ESP32SerialWiFiBridge/blob/master/LICENSE) License.
+
+## Donete

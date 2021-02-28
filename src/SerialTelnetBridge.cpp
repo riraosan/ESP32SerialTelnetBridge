@@ -25,15 +25,6 @@ SOFTWARE.
 #include <ArduinoOTA.h>
 #include <SerialTelnetBridge.h>
 
-/*
-    log_e("")：エラー
-    log_w("")：警告
-    log_i("")：情報
-    log_d("")：デバッグ
-    log_v("")：詳細
-    log_d("")：通常
-*/
-
 SerialTelnetBridgeClass::SerialTelnetBridgeClass()
 {
     _dns = new DNSServer();
@@ -48,12 +39,12 @@ SerialTelnetBridgeClass::SerialTelnetBridgeClass()
     _Serial1 = new HardwareSerial(1);
     _Serial2 = new HardwareSerial(2);
 
-    _HOSTNAME = "esp32_001";
-    _TARGET_HOSTNAME = "esp32_gw";
-    _AP_PASSWORD = "";
-    _COMMAND_PROMPT = "~esp$ ";
-    _AP_NAME = "ESP-G-AP";
-    _PORTAL_TIMEOUT = 180;
+    setHostname("esp32_001");
+    setTargetHostname("esp32_gw");
+    setApPassword("");
+    setCommandPrompt("~esp$ ");
+    setApName("ESP-G-AP");
+    setPortalTimeout(180);
 
     initSerialPorts();
 }
@@ -212,6 +203,32 @@ void SerialTelnetBridgeClass::initSerial()
     _Serial2->flush();
 }
 
+bool SerialTelnetBridgeClass::setSerialPort(HardwareSerial *serial, SerialSettings *port)
+{
+    serial->setDebugOutput(false);
+    serial->setRxBufferSize(port->SERIAL_BUFFER_SIZE);
+    serial->begin(port->UART_BAUD, port->SERIAL_PARAM, port->SERIAL_RXPIN, port->SERIAL_TXPIN);
+    serial->println("Serial Txd is on pin: " + String(port->SERIAL_TXPIN));
+    serial->println("Serial Rxd is on pin: " + String(port->SERIAL_RXPIN));
+    serial->flush();
+
+    return true;
+}
+
+void SerialTelnetBridgeClass::initSerial(bool serial0, bool serial1, bool serial2)
+{
+    log_d("- Initializing Serial...");
+
+    if (serial0)
+        setSerialPort(_Serial0, &_port0);
+
+    if (serial1)
+        setSerialPort(_Serial1, &_port1);
+
+    if (serial2)
+        setSerialPort(_Serial2, &_port2);
+}
+
 void SerialTelnetBridgeClass::initTelnet()
 {
     log_d("- Initializing Telnet...");
@@ -252,9 +269,41 @@ void SerialTelnetBridgeClass::initTelnet()
     delay(500);
 }
 
+// could be used as:
+// > pin(13,0)  # set pin 13 to 0
+// > print pin(13)
+// 0
+numvar pin_func(void)
+{
+    // two args this is a set
+    if (getarg(0) == 2)                     ///  getarg(0) is the number of args
+        digitalWrite(getarg(1), getarg(2)); // getarg(1): 1st arg, getarg(2) 2nd arg
+
+    // always return the value read
+    return digitalRead(getarg(1));
+}
+
 void SerialTelnetBridgeClass::initConsole()
 {
     log_d("- Initializing Console...");
+
+    _CON.begin(115200, _COMMAND_PROMPT, 10);
+
+    if (_CON.termProbe())
+    { /* zero indicates success */
+        printf("\n"
+               "Your terminal application does not support escape sequences.\n"
+               "Line editing and history features are disabled.\n"
+               "On linux , try screen.\n"
+               "On Windows, try using Putty instead.\n");
+        _CON.termDumb(true);
+    }
+
+    // add a new function "pin" to bitlash
+    _CON.addFunction("pin", (bitlash_function)pin_func);
+
+    _CON.consoleTaskStart(); // will start a task waiting for input and execute
+                             // it with Bitlash doCommand()
 }
 
 void SerialTelnetBridgeClass::initOTA()
@@ -336,7 +385,7 @@ void SerialTelnetBridgeClass::printClock()
 
     log_i("HH:MM:SS = %02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
 }
-
+#ifdef SIMPLE_CLI
 void SerialTelnetBridgeClass::consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli)
 {
     // read from serial, send to telnet
@@ -360,6 +409,7 @@ void SerialTelnetBridgeClass::consoleHandle(TelnetSpy *telnet, HardwareSerial *s
 
     telnet->handle();
 }
+#endif
 
 AsyncWebServer *SerialTelnetBridgeClass::getAsyncWebServerPtr()
 {
@@ -396,6 +446,11 @@ void SerialTelnetBridgeClass::setApName(String apName)
     _AP_NAME = apName;
 }
 
+void SerialTelnetBridgeClass::setPortalTimeout(uint16_t portalTimeout)
+{
+    _PORTAL_TIMEOUT = portalTimeout;
+}
+
 bool SerialTelnetBridgeClass::begin()
 {
     initWiFi();
@@ -407,13 +462,24 @@ bool SerialTelnetBridgeClass::begin()
     return true;
 }
 
+bool SerialTelnetBridgeClass::begin(bool serial0, bool serial1, bool serial2)
+{
+    initWiFi();
+    initSerial(serial0, serial1, serial2);
+    initTelnet();
+    initConsole();
+    initOTA();
+
+    return true;
+}
+
 void SerialTelnetBridgeClass::handle()
 {
     ArduinoOTA.handle();
 
-    consoleHandle(_telnet0, _Serial0, &_cli0);
-    consoleHandle(_telnet1, _Serial1, &_cli1);
-    consoleHandle(_telnet2, _Serial2, &_cli2);
+    //consoleHandle(_telnet0, _Serial0, &_cli0);
+    //consoleHandle(_telnet1, _Serial1, &_cli1);
+    //consoleHandle(_telnet2, _Serial2, &_cli2);
 
     yield();
 }

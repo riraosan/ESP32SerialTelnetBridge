@@ -33,7 +33,8 @@ SOFTWARE.
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
 #include <HardwareSerial.h>
-#include <SimpleCLI.h>
+//#include <SimpleCLI.h>
+#include <LinenoiseBitlash.h>
 
 class SerialSettings
 {
@@ -85,9 +86,11 @@ public:
     static void printEspState();
 
     virtual bool begin();
+    virtual bool begin(bool serial0, bool serial1, bool serial2);
     virtual void initWiFi();
     virtual void initOTA();
     virtual void initSerial();
+    virtual void initSerial(bool serial0, bool serial1, bool serial2);
     virtual void initTelnet();
     virtual void initConsole();
     virtual void initClock();
@@ -99,14 +102,19 @@ public:
     void setApPassword(String password);
     void setTargetHostname(String targetHostname);
     void setCommandPrompt(String prompt);
+    void setPortalTimeout(uint16_t portalTimeout);
 
     //Message loop
-    virtual void consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli);
+#ifdef SIMPLE_CLI
+    virtual void consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli)
+#endif
     virtual void handle();
 
     AsyncWebServer *getAsyncWebServerPtr();
 
 protected:
+
+#ifdef SIMPLE_CLI
     SimpleCLI _cli0;
     SimpleCLI _cli1;
     SimpleCLI _cli2;
@@ -114,6 +122,7 @@ protected:
     Command _command0;
     Command _command1;
     Command _command2;
+#endif
 
 private:
     String _HOSTNAME;
@@ -143,4 +152,8 @@ private:
     SerialSettings _port0;
     SerialSettings _port1;
     SerialSettings _port2;
+
+    bool setSerialPort(HardwareSerial *serial, SerialSettings *port);
+
+    LinenoiseBitlash _CON;
 };

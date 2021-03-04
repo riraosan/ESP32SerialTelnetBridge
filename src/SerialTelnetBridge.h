@@ -45,6 +45,7 @@ public:
     uint8_t SERIAL_TXPIN;      // transmit Pin UART
     uint16_t SERIAL_TCP_PORT;  // Telnet Port UART
     size_t SERIAL_BUFFER_SIZE; // RX Buffer Size UART
+    String welcomeMsg;
 
     SerialSettings()
     {
@@ -54,6 +55,7 @@ public:
         SERIAL_TXPIN = 0;
         SERIAL_TCP_PORT = 0;
         SERIAL_BUFFER_SIZE = 1024;
+        welcomeMsg =
     }
 };
 
@@ -85,17 +87,16 @@ public:
 
     static void printEspState();
 
-    virtual bool begin();
     virtual bool begin(bool serial0, bool serial1, bool serial2);
     virtual void initWiFi();
     virtual void initOTA();
-    virtual void initSerial();
     virtual void initSerial(bool serial0, bool serial1, bool serial2);
-    virtual void initTelnet();
+    virtual void initTelnet(String welcomMsg, TelnetSpy *telnet, void (*callbackOnConnect)(), void (*callbackOnDisconnect)());
     virtual void initConsole();
     virtual void initClock();
     virtual void printClock();
     virtual void initSerialPorts();
+    virtual void initTelnetPorts();
 
     void setHostname(String hostname);
     void setApName(String apName);
@@ -153,7 +154,7 @@ private:
     SerialSettings _port1;
     SerialSettings _port2;
 
-    bool setSerialPort(HardwareSerial *serial, SerialSettings *port);
+    void setSerialPort(HardwareSerial *serial, SerialSettings *port);
 
     LinenoiseBitlash _CON;
 };

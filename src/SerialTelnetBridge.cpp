@@ -28,7 +28,7 @@ SOFTWARE.
 SerialTelnetBridgeClass::SerialTelnetBridgeClass()
 {
     _dns = new DNSServer();
-    _server = new AsyncWebServer(80);
+    _server = new AsyncWebServer(8080);
     _WiFiManager = new AsyncWiFiManager(_server, _dns);
 
     _telnet0 = new TelnetSpy();

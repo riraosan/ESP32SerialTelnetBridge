@@ -31,7 +31,7 @@ SOFTWARE.
 #include <TelnetSpy.h>
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
-#include <StreamUtils.h>
+//#include <StreamUtils.h>
 #include <HardwareSerial.h>
 //#include <SimpleCLI.h>
 #include <LinenoiseBitlash.h>

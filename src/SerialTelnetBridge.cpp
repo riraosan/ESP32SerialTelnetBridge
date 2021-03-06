@@ -35,9 +35,9 @@ SerialTelnetBridgeClass::SerialTelnetBridgeClass()
     _telnet1 = new TelnetSpy();
     _telnet2 = new TelnetSpy();
 
-    _Serial0 = new HardwareSerial(0);
-    _Serial1 = new HardwareSerial(1);
-    _Serial2 = new HardwareSerial(2);
+    _serial0 = new HardwareSerial(0);
+    _serial1 = new HardwareSerial(1);
+    _serial2 = new HardwareSerial(2);
 
     setHostname("esp32_001");
     setTargetHostname("esp32_gw");
@@ -47,6 +47,7 @@ SerialTelnetBridgeClass::SerialTelnetBridgeClass()
     setPortalTimeout(180);
 
     initSerialPorts();
+    initTelnetPorts();
 }
 
 void SerialTelnetBridgeClass::initSerialPorts()
@@ -54,14 +55,32 @@ void SerialTelnetBridgeClass::initSerialPorts()
     _port0.SERIAL_RXPIN = 3;
     _port0.SERIAL_TXPIN = 1;
     _port0.SERIAL_TCP_PORT = 55550;
+    _port0.SERIAL_BUFFER_SIZE = 1024;
 
     _port1.SERIAL_RXPIN = 16;
     _port1.SERIAL_TXPIN = 17;
     _port1.SERIAL_TCP_PORT = 55551;
+    _port1.SERIAL_BUFFER_SIZE = 1024;
 
     _port2.SERIAL_RXPIN = 4;
     _port2.SERIAL_TXPIN = 2;
     _port2.SERIAL_TCP_PORT = 55552;
+    _port2.SERIAL_BUFFER_SIZE = 1024;
+}
+
+void SerialTelnetBridgeClass::initTelnetPorts()
+{
+    _port0.SERIAL_TCP_PORT = 55550;
+    _port0.SERIAL_BUFFER_SIZE = 1024;
+    _port0.welcomeMsg = "Welcome to telnet0 port:55550";
+
+    _port1.SERIAL_TCP_PORT = 55551;
+    _port1.SERIAL_BUFFER_SIZE = 1024;
+    _port1.welcomeMsg = "Welcome to telnet1 port:55551";
+
+    _port2.SERIAL_TCP_PORT = 55552;
+    _port2.SERIAL_BUFFER_SIZE = 1024;
+    _port2.welcomeMsg = "Welcome to telnet1 port:55552";
 }
 
 void SerialTelnetBridgeClass::setSerialPort0(SerialSettings &port0)
@@ -128,8 +147,8 @@ void SerialTelnetBridgeClass::initWiFi()
     }
 
     log_d("- Success to connect AP!!");
-    log_d("- address to _dns = 0x%x", _dns);
-    log_d("- address to _server = 0x%x", _server);
+    //log_d("- address to _dns = 0x%x", _dns);
+    //log_d("- address to _server = 0x%x", _server);
 
     printEspState();
 
@@ -181,33 +200,39 @@ void SerialTelnetBridgeClass::initSerial(bool serial0, bool serial1, bool serial
     log_d("- Initializing Serial...");
 
     if (serial0)
-        setSerialPort(_Serial0, &_port0);
+        setSerialPort(_serial0, &_port0);
 
     if (serial1)
-        setSerialPort(_Serial1, &_port1);
+        setSerialPort(_serial1, &_port1);
 
     if (serial2)
-        setSerialPort(_Serial2, &_port2);
+        setSerialPort(_serial2, &_port2);
 }
 
-void SerialTelnetBridgeClass::setTelnet()
+void SerialTelnetBridgeClass::setTelnetPort(TelnetSpy *telnet, SerialSettings *port, void (*callbackOnConnect)(), void (*callbackOnDisconnect)())
+{
+    telnet->setWelcomeMsg((char *)port->welcomeMsg.c_str());
+    telnet->setCallbackOnConnect(callbackOnConnect);
+    telnet->setCallbackOnDisconnect(callbackOnDisconnect);
+    telnet->setPort(port->SERIAL_TCP_PORT);
+    telnet->setBufferSize(port->SERIAL_BUFFER_SIZE);
+    //begin telnet only
+    telnet->setSerial(nullptr);
+    telnet->begin(port->UART_BAUD);
+}
 
-void SerialTelnetBridgeClass::initTelnet(String welcomMsg, TelnetSpy *telnet, void (*callbackOnConnect)(), void (*callbackOnDisconnect)())
+void SerialTelnetBridgeClass::initTelnet(bool telnet0, bool telnet1, bool telnet2)
 {
     log_d("- Initializing Telnet...");
 
-    String prompt(_COMMAND_PROMPT);
+    if (telnet0)
+        setTelnetPort(_telnet0, &_port0, SerialTelnetBridgeClass::telnet0Connected, SerialTelnetBridgeClass::telnet0Disconnected);
 
-    telnet->setWelcomeMsg(welcomMsg.c_str());
-    telnet->setCallbackOnConnect(callbackOnConnect);
-    telnet->setCallbackOnDisconnect(callbackOnDisconnect);
-    telnet->setPort(_port0.SERIAL_TCP_PORT);
-    telnet->setBufferSize(_port0.SERIAL_BUFFER_SIZE);
-    //to begin telnet only
-    telnet->setSerial(nullptr);
-    telnet->begin(_port0.UART_BAUD);
+    if (telnet1)
+        setTelnetPort(_telnet1, &_port1, SerialTelnetBridgeClass::telnet1Connected, SerialTelnetBridgeClass::telnet1Disconnected);
 
-    delay(500);
+    if (telnet2)
+        setTelnetPort(_telnet2, &_port2, SerialTelnetBridgeClass::telnet2Connected, SerialTelnetBridgeClass::telnet2Disconnected);
 }
 
 // could be used as:
@@ -226,25 +251,22 @@ numvar pin_func(void)
 
 void SerialTelnetBridgeClass::initConsole()
 {
-    log_d("- Initializing Console...");
+    log_d("- Initializing bitlash console...");
 
-    _CON.begin(115200, _COMMAND_PROMPT, 10);
+    _bcli.begin(115200, _COMMAND_PROMPT, 10);
 
-    if (_CON.termProbe())
+    if (_bcli.termProbe())
     { /* zero indicates success */
         printf("\n"
                "Your terminal application does not support escape sequences.\n"
                "Line editing and history features are disabled.\n"
                "On linux , try screen.\n"
                "On Windows, try using Putty instead.\n");
-        _CON.termDumb(true);
+        _bcli.termDumb(true);
     }
 
     // add a new function "pin" to bitlash
-    _CON.addFunction("pin", (bitlash_function)pin_func);
-
-    _CON.consoleTaskStart(); // will start a task waiting for input and execute
-                             // it with Bitlash doCommand()
+    _bcli.addFunction("pin", (bitlash_function)pin_func);
 }
 
 void SerialTelnetBridgeClass::initOTA()
@@ -396,7 +418,7 @@ bool SerialTelnetBridgeClass::begin(bool serial0, bool serial1, bool serial2)
 {
     initWiFi();
     initSerial(serial0, serial1, serial2);
-    initTelnet();
+    initTelnet(true, false, false);
     initConsole();
     initOTA();
 
@@ -407,9 +429,7 @@ void SerialTelnetBridgeClass::handle()
 {
     ArduinoOTA.handle();
 
-    //consoleHandle(_telnet0, _Serial0, &_cli0);
-    //consoleHandle(_telnet1, _Serial1, &_cli1);
-    //consoleHandle(_telnet2, _Serial2, &_cli2);
+    _bcli.bitlashHandle(_telnet0);
 
     yield();
 }

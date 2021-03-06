@@ -55,7 +55,7 @@ public:
         SERIAL_TXPIN = 0;
         SERIAL_TCP_PORT = 0;
         SERIAL_BUFFER_SIZE = 1024;
-        welcomeMsg =
+        welcomeMsg = "";
     }
 };
 
@@ -101,7 +101,7 @@ public:
     virtual void initWiFi();
     virtual void initOTA();
     virtual void initSerial(bool serial0, bool serial1, bool serial2);
-    virtual void initTelnet(String welcomMsg, TelnetSpy *telnet, void (*callbackOnConnect)(), void (*callbackOnDisconnect)());
+    virtual void initTelnet(bool telnet0, bool telnet1, bool telnet2);
     virtual void initConsole();
     virtual void initClock();
     virtual void printClock();
@@ -156,15 +156,16 @@ private:
     TelnetSpy *_telnet1;
     TelnetSpy *_telnet2;
 
-    HardwareSerial *_Serial0;
-    HardwareSerial *_Serial1;
-    HardwareSerial *_Serial2;
+    HardwareSerial *_serial0;
+    HardwareSerial *_serial1;
+    HardwareSerial *_serial2;
 
     SerialSettings _port0;
     SerialSettings _port1;
     SerialSettings _port2;
 
     void setSerialPort(HardwareSerial *serial, SerialSettings *port);
+    void setTelnetPort(TelnetSpy *telent, SerialSettings *port, void (*callbackOnConnect)(), void (*callbackOnDisconnect)());
 
-    LinenoiseBitlash _CON;
+    BitlashCLI _bcli;
 };

@@ -59,14 +59,49 @@ public:
     }
 };
 
-//bitlashのラッパークラス。シリアル文字列を横取りする。
 class BitlashCLI : public LinenoiseBitlash
 {
 public:
-    void bitlashHandle(TelnetSpy *telnet)
+    void bitlashConsoleHandle()
     {
-        consoleTask();
+        char *line = nullptr;
+
+        if ((line = lineNoise()) != NULL)
+        {
+            log_i("recieve: %s", line);
+            sendTelnet(line);
+            historyAdd(line);
+            doCommand(line);
+            freeLine(line);
+        }
+
+        if (_telnet->available())
+        {
+            //sp(_telnet->readStringUntil('\n').c_str());
+            //telnet->write(_COMMAND_PROMPT.c_str());
+        }
+
+        if (_telnet)
+            _telnet->handle();
     }
+
+    void bindTelnet(TelnetSpy *telnet)
+    {
+        if (telnet)
+            _telnet = telnet;
+    }
+
+    void sendTelnet(char *line)
+    {
+        while (*line)
+            _telnet->write(*line++);
+
+        _telnet->write("\n");
+        _telnet->write("~esp$ ");
+    }
+
+private:
+    TelnetSpy *_telnet;
 };
 
 class SerialTelnetBridgeClass
@@ -97,7 +132,7 @@ public:
 
     static void printEspState();
 
-    virtual bool begin(bool serial0, bool serial1, bool serial2);
+    virtual bool begin(bool serial1, bool serial2);
     virtual void initWiFi();
     virtual void initOTA();
     virtual void initSerial(bool serial0, bool serial1, bool serial2);
@@ -114,17 +149,19 @@ public:
     void setTargetHostname(String targetHostname);
     void setCommandPrompt(String prompt);
     void setPortalTimeout(uint16_t portalTimeout);
+    void bindTelnet0(void);
+    void bindTelnet1(void);
+    void bindTelnet2(void);
 
     //Message loop
 #ifdef SIMPLE_CLI
     virtual void consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli)
 #endif
-    virtual void handle();
+        virtual void handle();
 
     AsyncWebServer *getAsyncWebServerPtr();
 
 protected:
-
 #ifdef SIMPLE_CLI
     SimpleCLI _cli0;
     SimpleCLI _cli1;

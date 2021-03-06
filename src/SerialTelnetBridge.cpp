@@ -72,15 +72,15 @@ void SerialTelnetBridgeClass::initTelnetPorts()
 {
     _port0.SERIAL_TCP_PORT = 55550;
     _port0.SERIAL_BUFFER_SIZE = 1024;
-    _port0.welcomeMsg = "Welcome to telnet0 port:55550";
+    _port0.welcomeMsg = "Welcome to telnet0 port:55550\n\n";
 
     _port1.SERIAL_TCP_PORT = 55551;
     _port1.SERIAL_BUFFER_SIZE = 1024;
-    _port1.welcomeMsg = "Welcome to telnet1 port:55551";
+    _port1.welcomeMsg = "Welcome to telnet1 port:55551\n\n";
 
     _port2.SERIAL_TCP_PORT = 55552;
     _port2.SERIAL_BUFFER_SIZE = 1024;
-    _port2.welcomeMsg = "Welcome to telnet1 port:55552";
+    _port2.welcomeMsg = "Welcome to telnet1 port:55552\n\n";
 }
 
 void SerialTelnetBridgeClass::setSerialPort0(SerialSettings &port0)
@@ -249,6 +249,21 @@ numvar pin_func(void)
     return digitalRead(getarg(1));
 }
 
+void SerialTelnetBridgeClass::bindTelnet0()
+{
+    _bcli.bindTelnet(_telnet0);
+}
+
+void SerialTelnetBridgeClass::bindTelnet1()
+{
+    _bcli.bindTelnet(_telnet1);
+}
+
+void SerialTelnetBridgeClass::bindTelnet2()
+{
+    _bcli.bindTelnet(_telnet2);
+}
+
 void SerialTelnetBridgeClass::initConsole()
 {
     log_d("- Initializing bitlash console...");
@@ -267,6 +282,8 @@ void SerialTelnetBridgeClass::initConsole()
 
     // add a new function "pin" to bitlash
     _bcli.addFunction("pin", (bitlash_function)pin_func);
+
+    bindTelnet0();
 }
 
 void SerialTelnetBridgeClass::initOTA()
@@ -414,10 +431,10 @@ void SerialTelnetBridgeClass::setPortalTimeout(uint16_t portalTimeout)
     _PORTAL_TIMEOUT = portalTimeout;
 }
 
-bool SerialTelnetBridgeClass::begin(bool serial0, bool serial1, bool serial2)
+bool SerialTelnetBridgeClass::begin(bool serial1, bool serial2)
 {
     initWiFi();
-    initSerial(serial0, serial1, serial2);
+    initSerial(false, serial1, serial2);
     initTelnet(true, false, false);
     initConsole();
     initOTA();
@@ -429,7 +446,7 @@ void SerialTelnetBridgeClass::handle()
 {
     ArduinoOTA.handle();
 
-    _bcli.bitlashHandle(_telnet0);
+    _bcli.bitlashConsoleHandle();
 
     yield();
 }

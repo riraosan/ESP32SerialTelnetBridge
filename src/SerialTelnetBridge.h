@@ -59,6 +59,16 @@ public:
     }
 };
 
+//bitlashのラッパークラス。シリアル文字列を横取りする。
+class BitlashCLI : public LinenoiseBitlash
+{
+public:
+    void bitlashHandle(TelnetSpy *telnet)
+    {
+        consoleTask();
+    }
+};
+
 class SerialTelnetBridgeClass
 {
 public:

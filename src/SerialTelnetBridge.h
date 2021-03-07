@@ -31,9 +31,7 @@ SOFTWARE.
 #include <TelnetSpy.h>
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
-//#include <StreamUtils.h>
 #include <HardwareSerial.h>
-//#include <SimpleCLI.h>
 #include <LinenoiseBitlash.h>
 
 class SerialSettings
@@ -59,26 +57,52 @@ public:
     }
 };
 
-class BitlashCLI : public LinenoiseBitlash
+class BitlashCLI : public Console
 {
 public:
-    void bitlashConsoleHandle()
+    void begin(int baud, String p, int hlen)
     {
-        char *line = nullptr;
+        _prompt = p;
+        Console::begin(baud, p, hlen);
+        initBitlash(baud);
+    }
 
-        if ((line = lineNoise()) != NULL)
+    void addFunction(const char *func_name, bitlash_function func)
+    {
+        _btl.addFunction(func_name, func);
+    }
+
+    virtual void consoleTask()
+    {
+        log_d("consoleTask start!");
+        char *line;
+
+        while (1)
         {
-            log_i("recieve: %s", line);
-            sendTelnet(line);
-            historyAdd(line);
-            doCommand(line);
-            freeLine(line);
+            if ((line = lineNoise()) != NULL)
+            {
+                sendTelnet(line);
+                historyAdd(line);
+                doCommand(line);
+                freeLine(line);
+            }
         }
+    }
 
+    void bitlashConsoleHandle(void)
+    {
         if (_telnet->available())
         {
-            //sp(_telnet->readStringUntil('\n').c_str());
-            //telnet->write(_COMMAND_PROMPT.c_str());
+            String buffer(_telnet->readStringUntil('\n'));
+            sp(buffer.c_str());
+            sp("\n");
+
+            historyAdd((char *)buffer.c_str());
+            doCommand((char *)buffer.c_str());
+
+            sp(_prompt.c_str());
+
+            _telnet->write(_prompt.c_str());
         }
 
         if (_telnet)
@@ -93,15 +117,22 @@ public:
 
     void sendTelnet(char *line)
     {
-        while (*line)
-            _telnet->write(*line++);
+        log_d("send to telnet: %s", line);
 
-        _telnet->write("\n");
-        _telnet->write("~esp$ ");
+        if (_telnet)
+        {
+            while (*line)
+                _telnet->write(*line++);
+
+            _telnet->write("\n");
+            _telnet->write(_prompt.c_str());
+        }
     }
 
 private:
     TelnetSpy *_telnet;
+    LinenoiseBitlash _btl;
+    String _prompt;
 };
 
 class SerialTelnetBridgeClass
@@ -154,10 +185,7 @@ public:
     void bindTelnet2(void);
 
     //Message loop
-#ifdef SIMPLE_CLI
-    virtual void consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli)
-#endif
-        virtual void handle();
+    virtual void handle();
 
     AsyncWebServer *getAsyncWebServerPtr();
 

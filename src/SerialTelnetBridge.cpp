@@ -284,6 +284,8 @@ void SerialTelnetBridgeClass::initConsole()
     _bcli.addFunction("pin", (bitlash_function)pin_func);
 
     bindTelnet0();
+
+    _bcli.consoleTaskStart();
 }
 
 void SerialTelnetBridgeClass::initOTA()
@@ -365,31 +367,6 @@ void SerialTelnetBridgeClass::printClock()
 
     log_i("HH:MM:SS = %02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
 }
-#ifdef SIMPLE_CLI
-void SerialTelnetBridgeClass::consoleHandle(TelnetSpy *telnet, HardwareSerial *serial, SimpleCLI *cli)
-{
-    // read from serial, send to telnet
-    //(not use telnetSpy method)
-    if (serial->available())
-    {
-        telnet->write(serial->read());
-    }
-
-    telnet->handle();
-
-    // read from telnet, send to serial
-    //(not use telnetSpy method)
-    if (telnet->available())
-    {
-        String line = telnet->readStringUntil('\n');
-
-        cli->parse(line); //include command execute
-        telnet->write(_COMMAND_PROMPT.c_str());
-    }
-
-    telnet->handle();
-}
-#endif
 
 AsyncWebServer *SerialTelnetBridgeClass::getAsyncWebServerPtr()
 {

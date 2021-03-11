@@ -80,7 +80,7 @@ void SerialTelnetBridgeClass::initTelnetPorts()
 
     _port2.SERIAL_TCP_PORT = 55552;
     _port2.SERIAL_BUFFER_SIZE = 1024;
-    _port2.welcomeMsg = "Welcome to telnet1 port:55552\n\n";
+    _port2.welcomeMsg = "Welcome to telnet2 port:55552\n\n";
 }
 
 void SerialTelnetBridgeClass::setSerialPort0(SerialSettings &port0)
@@ -153,6 +153,8 @@ void SerialTelnetBridgeClass::initWiFi()
     printEspState();
 
     log_i("- WiFi Started.");
+
+    _dns->start(53, "*", WiFi.localIP());
 }
 
 void SerialTelnetBridgeClass::telnet0Connected()
@@ -333,12 +335,14 @@ void SerialTelnetBridgeClass::initOTA()
         }
     });
 
+    ArduinoOTA.setMdnsEnabled(false);
     ArduinoOTA.setHostname(_HOSTNAME.c_str());
 
     log_d("- Hostname: %s", ArduinoOTA.getHostname().c_str());
 
     ArduinoOTA.begin();
     log_d("- OTA Started.");
+
 }
 
 void SerialTelnetBridgeClass::initClock()
@@ -423,7 +427,10 @@ void SerialTelnetBridgeClass::handle()
 {
     ArduinoOTA.handle();
 
+
     _bcli.bitlashConsoleHandle();
+
+    _dns->processNextRequest();
 
     yield();
 }

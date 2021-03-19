@@ -144,8 +144,6 @@ public:
     SerialTelnetBridgeClass(const SerialTelnetBridgeClass &);
     SerialTelnetBridgeClass &operator=(const SerialTelnetBridgeClass &);
 
-    //TODO　構造体の変数を変更するメソッドを作成する。
-
     virtual void setSerialPort0(SerialSettings &port0);
     virtual void setSerialPort1(SerialSettings &port1);
     virtual void setSerialPort2(SerialSettings &port2);
@@ -234,3 +232,7 @@ private:
 
     BitlashCLI _bcli;
 };
+
+#if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_SERIALTELNETBRIDGE)
+extern SerialTelnetBridgeClass STB;
+#endif

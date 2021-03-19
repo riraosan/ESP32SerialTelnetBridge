@@ -146,15 +146,24 @@ void SerialTelnetBridgeClass::initWiFi()
         }
     }
 
+    delete _WiFiManager;
+
+    _dns->stop();
+    delete _dns;
+
+    _server->reset();
+    _server->end();
+    delete _server;
+
     log_d("- Success to connect AP!!");
-    //log_d("- address to _dns = 0x%x", _dns);
-    //log_d("- address to _server = 0x%x", _server);
+    log_d("- address to _dns = 0x%x", _dns);
+    log_d("- address to _server = 0x%x", _server);
 
     printEspState();
 
     log_i("- WiFi Started.");
 
-    _dns->start(53, "*", WiFi.localIP());
+    log_i("- DNS Server Started.");
 }
 
 void SerialTelnetBridgeClass::telnet0Connected()
@@ -335,14 +344,13 @@ void SerialTelnetBridgeClass::initOTA()
         }
     });
 
-    ArduinoOTA.setMdnsEnabled(false);
+    ArduinoOTA.setMdnsEnabled(true);
     ArduinoOTA.setHostname(_HOSTNAME.c_str());
 
     log_d("- Hostname: %s", ArduinoOTA.getHostname().c_str());
 
     ArduinoOTA.begin();
     log_d("- OTA Started.");
-
 }
 
 void SerialTelnetBridgeClass::initClock()
@@ -427,10 +435,11 @@ void SerialTelnetBridgeClass::handle()
 {
     ArduinoOTA.handle();
 
-
     _bcli.bitlashConsoleHandle();
-
-    _dns->processNextRequest();
 
     yield();
 }
+
+#if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_SERIALTELNETBRIDGE)
+SerialTelnetBridgeClass STB;
+#endif

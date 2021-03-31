@@ -48,6 +48,8 @@ SerialTelnetBridgeClass::SerialTelnetBridgeClass()
 
     initSerialPorts();
     initTelnetPorts();
+
+    _connectCheckerCallback = nullptr;
 }
 
 void SerialTelnetBridgeClass::initSerialPorts()
@@ -127,6 +129,9 @@ void SerialTelnetBridgeClass::initWiFi()
         log_d("%s", WiFi.softAPIP().toString().c_str());
     });
 
+    if (_connectCheckerCallback != nullptr)
+        _connectChecker.attach(0.3, _connectCheckerCallback);
+
     if (_AP_PASSWORD.isEmpty())
     {
         if (!_WiFiManager->autoConnect(_AP_NAME.c_str()))
@@ -161,9 +166,10 @@ void SerialTelnetBridgeClass::initWiFi()
 
     printEspState();
 
-    log_i("- WiFi Started.");
+    if (_connectCheckerCallback != nullptr)
+        _connectChecker.detach();
 
-    log_i("- DNS Server Started.");
+    log_i("- WiFi Started.");
 }
 
 void SerialTelnetBridgeClass::telnet0Connected()
@@ -418,6 +424,11 @@ void SerialTelnetBridgeClass::setApName(String apName)
 void SerialTelnetBridgeClass::setPortalTimeout(uint16_t portalTimeout)
 {
     _PORTAL_TIMEOUT = portalTimeout;
+}
+
+void SerialTelnetBridgeClass::setWiFiConnectChecker(callback_c callback)
+{
+    _connectCheckerCallback = callback;
 }
 
 bool SerialTelnetBridgeClass::begin(bool serial1, bool serial2)

@@ -33,6 +33,7 @@ SOFTWARE.
 #include <ArduinoJson.h>
 #include <HardwareSerial.h>
 #include <LinenoiseBitlash.h>
+#include <Ticker.h>
 
 class SerialSettings
 {
@@ -144,6 +145,8 @@ public:
     SerialTelnetBridgeClass(const SerialTelnetBridgeClass &);
     SerialTelnetBridgeClass &operator=(const SerialTelnetBridgeClass &);
 
+    typedef void (*callback_c)(void);
+
     virtual void setSerialPort0(SerialSettings &port0);
     virtual void setSerialPort1(SerialSettings &port1);
     virtual void setSerialPort2(SerialSettings &port2);
@@ -181,6 +184,8 @@ public:
     void bindTelnet0(void);
     void bindTelnet1(void);
     void bindTelnet2(void);
+
+    void setWiFiConnectChecker(callback_c callback);
 
     //Message loop
     virtual void handle();
@@ -231,6 +236,8 @@ private:
     void setTelnetPort(TelnetSpy *telent, SerialSettings *port, void (*callbackOnConnect)(), void (*callbackOnDisconnect)());
 
     BitlashCLI _bcli;
+    Ticker _connectChecker;
+    callback_c _connectCheckerCallback;
 };
 
 #if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_SERIALTELNETBRIDGE)

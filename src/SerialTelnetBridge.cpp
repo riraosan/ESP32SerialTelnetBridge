@@ -251,7 +251,7 @@ void SerialTelnetBridgeClass::initTelnet(bool telnet0, bool telnet1, bool telnet
     if (telnet2)
         setTelnetPort(_telnet2, &_port2, SerialTelnetBridgeClass::telnet2Connected, SerialTelnetBridgeClass::telnet2Disconnected);
 }
-
+#if 0
 // could be used as:
 // > pin(13,0)  # set pin 13 to 0
 // > print pin(13)
@@ -265,24 +265,25 @@ numvar pin_func(void)
     // always return the value read
     return digitalRead(getarg(1));
 }
-
+#endif
 void SerialTelnetBridgeClass::bindTelnet0()
 {
-    _bcli.bindTelnet(_telnet0);
+    //_bcli.bindTelnet(_telnet0);
 }
 
 void SerialTelnetBridgeClass::bindTelnet1()
 {
-    _bcli.bindTelnet(_telnet1);
+    //_bcli.bindTelnet(_telnet1);
 }
 
 void SerialTelnetBridgeClass::bindTelnet2()
 {
-    _bcli.bindTelnet(_telnet2);
+    //.bindTelnet(_telnet2);
 }
 
 void SerialTelnetBridgeClass::initConsole()
 {
+#if 0
     log_d("- Initializing bitlash console...");
 
     _bcli.begin(115200, _COMMAND_PROMPT, 10);
@@ -303,6 +304,7 @@ void SerialTelnetBridgeClass::initConsole()
     bindTelnet0();
 
     _bcli.consoleTaskStart();
+#endif
 }
 
 void SerialTelnetBridgeClass::initOTA()
@@ -442,13 +444,15 @@ bool SerialTelnetBridgeClass::begin(bool serial1, bool serial2)
     return true;
 }
 
-void SerialTelnetBridgeClass::handle()
+bool SerialTelnetBridgeClass::handle()
 {
     ArduinoOTA.handle();
 
-    _bcli.bitlashConsoleHandle();
+    //_bcli.bitlashConsoleHandle();
 
     yield();
+
+    return Update.isRunning();
 }
 
 #if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_SERIALTELNETBRIDGE)

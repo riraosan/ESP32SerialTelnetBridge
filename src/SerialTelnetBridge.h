@@ -32,7 +32,7 @@ SOFTWARE.
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 #include <HardwareSerial.h>
-#include <LinenoiseBitlash.h>
+//#include <LinenoiseBitlash.h>
 #include <Ticker.h>
 
 class SerialSettings
@@ -57,7 +57,7 @@ public:
         welcomeMsg = "";
     }
 };
-
+#if 0
 class BitlashCLI : public Console
 {
 public:
@@ -135,6 +135,7 @@ private:
     LinenoiseBitlash _btl;
     String _prompt;
 };
+#endif
 
 class SerialTelnetBridgeClass
 {
@@ -188,7 +189,7 @@ public:
     void setWiFiConnectChecker(callback_c callback);
 
     //Message loop
-    virtual void handle();
+    virtual bool handle();
 
     AsyncWebServer *getAsyncWebServerPtr();
 
@@ -235,7 +236,7 @@ private:
     void setSerialPort(HardwareSerial *serial, SerialSettings *port);
     void setTelnetPort(TelnetSpy *telent, SerialSettings *port, void (*callbackOnConnect)(), void (*callbackOnDisconnect)());
 
-    BitlashCLI _bcli;
+    //BitlashCLI _bcli;
     Ticker _connectChecker;
     callback_c _connectCheckerCallback;
 };

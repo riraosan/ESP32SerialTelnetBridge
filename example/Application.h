@@ -24,16 +24,15 @@ SOFTWARE.
 
 #pragma once
 
-#include <Arduino.h>
-#include <Wire.h>
-#include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#include <Ticker.h>
+#include <Adafruit_Sensor.h>
+#include <Arduino.h>
 #include <SerialTelnetBridge.h>
+#include <Ticker.h>
+#include <Wire.h>
 
-//Message ID
-enum class ENUM_MESSAGE_ID
-{
+// Message ID
+enum class ENUM_MESSAGE_ID {
     MSG_COMMAND_RESET,
     MSG_COMMAND_CLOCK,
     MSG_COMMAND_CHECK_SENSOR,
@@ -44,11 +43,9 @@ enum class ENUM_MESSAGE_ID
     MSG_COMMAND_NOTHING
 };
 
-class Application : public SerialTelnetBridgeClass
-{
-public:
-    static Application &getInstance()
-    {
+class Application : public SerialTelnetBridgeClass {
+   public:
+    static Application &getInstance() {
         static Application instance;
         return instance;
     }
@@ -84,7 +81,7 @@ public:
     void setup(void);
     void handle(void);
 
-private:
+   private:
     AsyncWebServer *_server;
 
     Adafruit_BME280 *_bme;
@@ -104,10 +101,10 @@ private:
     Application(const Application &);
     Application &operator=(const Application &);
 
-    constexpr static PROGMEM prog_char *_PARAM_DEVICE_ID = "device_id";
+    constexpr static PROGMEM prog_char *_PARAM_DEVICE_ID     = "device_id";
     constexpr static PROGMEM prog_char *_ENDPOINT_URI_sensor = "/api/v1/sensors/all";
-    constexpr static PROGMEM prog_char *_ENDPOINT_URI_relay = "/api/v1/relays/operations";
-    constexpr static PROGMEM prog_char *_ENDPOINT_URI_servo = "/api/v1/servos/operations";
+    constexpr static PROGMEM prog_char *_ENDPOINT_URI_relay  = "/api/v1/relays/operations";
+    constexpr static PROGMEM prog_char *_ENDPOINT_URI_servo  = "/api/v1/servos/operations";
 
     String _getESP32ChipID(void);
     String _byteToHexString(uint8_t *buf, uint8_t length, String strSeperator = ":");

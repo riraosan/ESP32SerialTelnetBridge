@@ -24,37 +24,35 @@ SOFTWARE.
 
 #pragma once
 
+#include <ArduinoJson.h>
 #include <ArduinoOTA.h>
+#include <AsyncJson.h>
 #include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
 #include <ESPAsyncWiFiManager.h>
-#include <TelnetSpy.h>
-#include <AsyncJson.h>
-#include <ArduinoJson.h>
 #include <HardwareSerial.h>
+#include <TelnetSpy.h>
 //#include <LinenoiseBitlash.h>
 #include <Ticker.h>
 
-class SerialSettings
-{
-public:
-    uint32_t UART_BAUD;        // Baudrate UART
-    uint32_t SERIAL_PARAM;     // Data/Parity/Stop UART
-    uint8_t SERIAL_RXPIN;      // receive Pin UART
-    uint8_t SERIAL_TXPIN;      // transmit Pin UART
-    uint16_t SERIAL_TCP_PORT;  // Telnet Port UART
-    size_t SERIAL_BUFFER_SIZE; // RX Buffer Size UART
+class SerialSettings {
+   public:
+    uint32_t UART_BAUD;         // Baudrate UART
+    uint32_t SERIAL_PARAM;      // Data/Parity/Stop UART
+    uint8_t SERIAL_RXPIN;       // receive Pin UART
+    uint8_t SERIAL_TXPIN;       // transmit Pin UART
+    uint16_t SERIAL_TCP_PORT;   // Telnet Port UART
+    size_t SERIAL_BUFFER_SIZE;  // RX Buffer Size UART
     String welcomeMsg;
 
-    SerialSettings()
-    {
-        UART_BAUD = 115200;
-        SERIAL_PARAM = SERIAL_8N1;
-        SERIAL_RXPIN = 0;
-        SERIAL_TXPIN = 0;
-        SERIAL_TCP_PORT = 0;
+    SerialSettings() {
+        UART_BAUD          = 115200;
+        SERIAL_PARAM       = SERIAL_8N1;
+        SERIAL_RXPIN       = 0;
+        SERIAL_TXPIN       = 0;
+        SERIAL_TCP_PORT    = 0;
         SERIAL_BUFFER_SIZE = 1024;
-        welcomeMsg = "";
+        welcomeMsg         = "";
     }
 };
 #if 0
@@ -137,9 +135,8 @@ private:
 };
 #endif
 
-class SerialTelnetBridgeClass
-{
-public:
+class SerialTelnetBridgeClass {
+   public:
     SerialTelnetBridgeClass();
     ~SerialTelnetBridgeClass() = default;
 
@@ -193,7 +190,7 @@ public:
 
     AsyncWebServer *getAsyncWebServerPtr();
 
-protected:
+   protected:
 #ifdef SIMPLE_CLI
     SimpleCLI _cli0;
     SimpleCLI _cli1;
@@ -204,7 +201,7 @@ protected:
     Command _command2;
 #endif
 
-private:
+   private:
     String _HOSTNAME;
     String _TARGET_HOSTNAME;
     String _AP_PASSWORD;

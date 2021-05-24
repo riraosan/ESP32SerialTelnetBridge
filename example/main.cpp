@@ -26,12 +26,10 @@ SOFTWARE.
 
 static Application &theApp = Application::getInstance();
 
-void setup()
-{
+void setup() {
     theApp.setup();
 }
 
-void loop()
-{
+void loop() {
     theApp.handle();
 }
